@@ -3,7 +3,7 @@ package Simulation.Events;
 import Simulation.Simulator;
 
 public class WritingOrderBeginning extends Event{
-    public WritingOrderBeginning(int time, Simulator simulationCore) {
+    public WritingOrderBeginning(double time, Simulator simulationCore) {
         super(time, simulationCore);
     }
 

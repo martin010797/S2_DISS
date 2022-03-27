@@ -4,7 +4,7 @@ import Simulation.BeautySalonSimulator;
 import Simulation.Simulator;
 
 public class SystemEvent extends Event{
-    public SystemEvent(int time, Simulator simulationCore) {
+    public SystemEvent(double time, Simulator simulationCore) {
         super(time, simulationCore);
     }
 

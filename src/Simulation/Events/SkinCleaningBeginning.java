@@ -3,7 +3,7 @@ package Simulation.Events;
 import Simulation.Simulator;
 
 public class SkinCleaningBeginning extends Event{
-    public SkinCleaningBeginning(int time, Simulator simulationCore) {
+    public SkinCleaningBeginning(double time, Simulator simulationCore) {
         super(time, simulationCore);
     }
 

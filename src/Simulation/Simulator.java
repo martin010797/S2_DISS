@@ -54,9 +54,11 @@ public abstract class Simulator {
         }
     }
 
-    public void setPaused(boolean paused) {
+    public boolean setPaused(boolean paused) {
         if (thread != null && thread.isAlive()){
             isPaused = paused;
+            return true;
         }
+        return false;
     }
 }

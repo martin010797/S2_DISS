@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 public abstract class EventSimulator extends Simulator{
-    protected int currentTime;
+    protected double currentTime;
     protected PriorityQueue<Event> calendar;
     protected int lengthOfSimulation;
 
@@ -31,7 +31,7 @@ public abstract class EventSimulator extends Simulator{
         while (!calendar.isEmpty() && (calendar.peek().getTime()) <= lengthOfSimulation){
             while (isPaused){
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(300);
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -54,12 +54,12 @@ public abstract class EventSimulator extends Simulator{
     }
 
     public String getCurrentTime() {
-        int seconds = currentTime % 60;
-        int minutes = (currentTime / 60) % 60;
+        int seconds = (int)currentTime % 60;
+        int minutes = ((int)currentTime / 60) % 60;
         if (minutes == 59 && seconds == 59){
             minutes = minutes;
         }
-        int hours = (9 + currentTime / 60 / 60) % 24;
+        int hours = (9 + (int)currentTime / 60 / 60) % 24;
         String time = "";
         if (hours < 10){
             time += "0"+ hours + ":";

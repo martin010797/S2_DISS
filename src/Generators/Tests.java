@@ -67,7 +67,7 @@ public class Tests {
         listOfObjects.add(new EmpiricalObject(61,100,0.3));
         listOfObjects.add(new EmpiricalObject(101,150,0.5));
         int[] generatedInRange = new int[4];
-        EmpGen empGen = new EmpGen(listOfObjects);
+        EmpGen empGen = new EmpGen(listOfObjects, seedGenerator.nextInt());
         if (!empGen.checkProbabilities()){
             System.out.println("Sucet pravdepodobnosti nedava hodnotu 1");
         }

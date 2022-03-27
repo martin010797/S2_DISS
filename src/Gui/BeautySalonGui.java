@@ -43,6 +43,7 @@ public class BeautySalonGui implements ISimDelegate{
     private JLabel numberOfReceptionistsLabel;
     private JTextPane statisticsTextPane;
     private JTextPane statesOfSystemTextPane;
+    private JLabel isPausedLabel;
 
     private DefaultXYDataset datasetLineChart;
     private XYSeries lineChartXYSeries;
@@ -82,6 +83,11 @@ public class BeautySalonGui implements ISimDelegate{
         startSimulationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                simulator.setDeltaT(Integer.parseInt(deltaTTextField.getText()));
+                simulator.setSleepLength(Integer.parseInt(lengthOfSleepTextField.getText()));
+                fastSimulationRadioButton.setEnabled(false);
+                slowSimulationRadioButton.setEnabled(false);
+                isPausedLabel.setVisible(false);
                 simulator.simulate();
             }
         });
@@ -89,6 +95,9 @@ public class BeautySalonGui implements ISimDelegate{
             @Override
             public void actionPerformed(ActionEvent e) {
                 simulator.stopSimulation();
+                fastSimulationRadioButton.setEnabled(true);
+                slowSimulationRadioButton.setEnabled(true);
+                isPausedLabel.setVisible(false);
             }
         });
         fastSimulationRadioButton.addActionListener(new ActionListener() {
@@ -122,7 +131,9 @@ public class BeautySalonGui implements ISimDelegate{
         pauseSimulationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                simulator.setPaused(true);
+                if(simulator.setPaused(true)){
+                    isPausedLabel.setVisible(true);
+                }
             }
         });
         changeTheSpeedButton.addActionListener(new ActionListener() {
@@ -169,6 +180,7 @@ public class BeautySalonGui implements ISimDelegate{
     }
 
     private void setDeafultText(){
+        isPausedLabel.setVisible(false);
         simulationTimeLabel.setText(simulator.getCurrentTime());
         numberOfMakeupArtistsTextField.setText("1");
         numberOfReceptionistsTextField.setText("1");

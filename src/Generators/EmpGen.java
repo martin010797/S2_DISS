@@ -8,8 +8,8 @@ public class EmpGen {
     private ArrayList<EmpiricalObject> distributions;
     private Random[] generators;
 
-    public EmpGen(ArrayList<EmpiricalObject> distributions) {
-        seedGenerator = new Random();
+    public EmpGen(ArrayList<EmpiricalObject> distributions, int seed) {
+        seedGenerator = new Random(seed);
         this.distributions = distributions;
         generators = new Random[distributions.size()+1];
         for (int i = 0; i < generators.length; i++) {

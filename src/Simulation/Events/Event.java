@@ -3,10 +3,10 @@ package Simulation.Events;
 import Simulation.Simulator;
 
 public abstract class Event implements Comparable<Event>{
-    protected int time;
+    protected double time;
     protected Simulator simulationCore;
 
-    public Event(int time, Simulator simulationCore) {
+    public Event(double time, Simulator simulationCore) {
         this.time = time;
         this.simulationCore = simulationCore;
     }
@@ -15,10 +15,17 @@ public abstract class Event implements Comparable<Event>{
 
     @Override
     public int compareTo(Event o) {
-        return this.time - o.time;
+        if (this.time < o.time){
+            return -1;
+        }else if(this.time > o.time){
+            return 1;
+        }else {
+            return 0;
+        }
+        //return this.time - o.time;
     }
 
-    public int getTime() {
+    public double getTime() {
         return time;
     }
 }

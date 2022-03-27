@@ -5,7 +5,7 @@ import Simulation.Simulator;
 
 public class TestingEvent extends Event{
 
-    public TestingEvent(int time, Simulator simulationCore) {
+    public TestingEvent(double time, Simulator simulationCore) {
         super(time, simulationCore);
     }
 
