@@ -1,0 +1,18 @@
+Fit All
+
+Document:  D:\Martin\ING\LetnySemester\DISS\sem\S2\S2\emp3.txt
+Data File: D:\Martin\ING\LetnySemester\DISS\sem\S2\S2\emp3.txt
+
+
+Function       Sq Error
+-----------------------
+Uniform        2.57e-007
+Beta           0.000267
+Normal         0.00259
+Weibull        0.00282
+Gamma          0.00326
+Erlang         0.00338
+Exponential    0.00505
+Lognormal      0.00565
+Poisson        0.00592
+Triangular     0.00665
