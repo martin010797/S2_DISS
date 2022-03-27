@@ -53,8 +53,31 @@ public abstract class EventSimulator extends Simulator{
         delegates.add(delegate);
     }
 
-    public int getCurrentTime() {
-        return currentTime;
+    public String getCurrentTime() {
+        int seconds = currentTime % 60;
+        int minutes = (currentTime / 60) % 60;
+        if (minutes == 59 && seconds == 59){
+            minutes = minutes;
+        }
+        int hours = (9 + currentTime / 60 / 60) % 24;
+        String time = "";
+        if (hours < 10){
+            time += "0"+ hours + ":";
+        }else {
+            time += hours + ":";
+        }
+        if (minutes < 10){
+            time += "0"+ minutes + ":";
+        }else {
+            time += minutes + ":";
+        }
+        if (seconds < 10){
+            time += "0"+ seconds;
+        }else {
+            time += seconds;
+        }
+        //time = hours + ":" + minutes + ":" + seconds;
+        return time;
     }
 
     public int getLengthOfSimulation() {

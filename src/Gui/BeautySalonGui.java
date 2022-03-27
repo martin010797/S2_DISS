@@ -36,10 +36,10 @@ public class BeautySalonGui implements ISimDelegate{
     private JTextField deltaTTextField;
     private JButton changeTheSpeedButton;
     private JTextField numberOfHairdressersTextField;
-    private JTextField numberOfCosmeticTextField;
+    private JTextField numberOfMakeupArtistsTextField;
     private JTextField numberOfReceptionistsTextField;
     private JLabel numberOfHairdressersLabel;
-    private JLabel numberOfCosmeticLabel;
+    private JLabel numberOfMakeupArtistsLabel;
     private JLabel numberOfReceptionistsLabel;
     private JTextPane statisticsTextPane;
     private JTextPane statesOfSystemTextPane;
@@ -48,6 +48,7 @@ public class BeautySalonGui implements ISimDelegate{
     private XYSeries lineChartXYSeries;
     private JFreeChart lineChart;
     private BeautySalonSimulator simulator;
+    private String lastStatesValues;
 
     public BeautySalonGui() {
         frame = new JFrame("Beauty salon");
@@ -57,6 +58,8 @@ public class BeautySalonGui implements ISimDelegate{
         frame.setVisible(true);
 
         simulator = new BeautySalonSimulator(1,100000000);
+        simulator.setDeltaT(400);
+        simulator.setSleepLength(400);
         simulator.registerDelegate(this);
 
         createDatasets();
@@ -125,7 +128,8 @@ public class BeautySalonGui implements ISimDelegate{
         changeTheSpeedButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                simulator.setDeltaT(Integer.parseInt(deltaTTextField.getText()));
+                simulator.setSleepLength(Integer.parseInt(lengthOfSleepTextField.getText()));
             }
         });
     }
@@ -133,7 +137,14 @@ public class BeautySalonGui implements ISimDelegate{
     @Override
     public void refresh(Simulator simulator) {
         BeautySalonSimulator sim = (BeautySalonSimulator) simulator;
-        simulationTimeLabel.setText(sim.getCurrentTime()+"");
+        simulationTimeLabel.setText(sim.getCurrentTime());
+
+        String statesOfSystem = sim.getStatesOfSimulation();
+        //aby vykreslovalo len ked nastala zmena nejakej hondoty
+        if (!statesOfSystem.equals(lastStatesValues)) {
+            statesOfSystemTextPane.setText(sim.getStatesOfSimulation());
+            lastStatesValues = statesOfSystemTextPane.getText();
+        }
     }
 
     public void createDatasets(){
@@ -158,17 +169,19 @@ public class BeautySalonGui implements ISimDelegate{
     }
 
     private void setDeafultText(){
-        numberOfCosmeticTextField.setText("1");
+        simulationTimeLabel.setText(simulator.getCurrentTime());
+        numberOfMakeupArtistsTextField.setText("1");
         numberOfReceptionistsTextField.setText("1");
         numberOfHairdressersTextField.setText("1");
         lengthOfSleepTextField.setText("400");
         deltaTTextField.setText("400");
         numberOfReplicationsTextField.setText("100000");
         lengthOfSimulationTextField.setText("1");
-        String text = "Pocet ludi v radoch: -\n \t Rad pred recepciou: -\n \t Rad pred upravou ucesu: -" +
-                "\n \t Rad pred licenim: -\n \t Rad pred platenim: -" +
-                "\n Stavy personalu: - \n Stavy zakaznikov: -";
+        String text = "Pocet ludi v radoch: -\n\tRad pred recepciou: -\n\tRad pred upravou ucesu: -" +
+                "\n\tRad pred licenim: -\n\tRad pred platenim: -" +
+                "\nStavy personalu: - \nStavy zakaznikov: -";
         statesOfSystemTextPane.setText(text);
         statisticsTextPane.setText("Statistiky: -");
+        lastStatesValues = statesOfSystemTextPane.getText();
     }
 }
