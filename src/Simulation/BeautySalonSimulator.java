@@ -1,6 +1,8 @@
 package Simulation;
 
+import Generators.ExpGen;
 import Gui.ISimDelegate;
+import Simulation.Events.CustomerArrived;
 import Simulation.Events.Event;
 import Simulation.Events.SystemEvent;
 import Simulation.Events.TestingEvent;
@@ -14,6 +16,8 @@ import java.util.*;
 public class BeautySalonSimulator extends EventSimulator{
 
     private Random seed;
+    private Random exponentialGeneratorBase;
+    private ExpGen arrivalGenerator;
 
     private boolean maxSpeed;
     private int deltaT;
@@ -53,16 +57,23 @@ public class BeautySalonSimulator extends EventSimulator{
         listOfMakeupArtists = new ArrayList<>();
         listOfReceptionists = new ArrayList<>();
 
-        seed = new Random();
         numberOfReceptionists = 0;
         numberOfHairstylists = 0;
         numberOfMakeupArtists = 0;
+
+        seed = new Random();
+        exponentialGeneratorBase = new Random(seed.nextInt());
+        arrivalGenerator = new ExpGen(exponentialGeneratorBase, 3600/8);
     }
 
     @Override
     public void doBeforeReplications() {
+        calendar.clear();
+        lastProcessedEvent = null;
+        currentTime = 0;
         //TODO
         // pridanie prvej udalosti prichodu namiesto testovacej
+        //calendar.add(new CustomerArrived(arrivalGenerator.nextValue(), this));
         calendar.add(new TestingEvent(0,this));
         if (!maxSpeed){
             calendar.add(new SystemEvent(currentTime,this));
@@ -105,8 +116,17 @@ public class BeautySalonSimulator extends EventSimulator{
         // mozno pridat vsade aj do priority queue podla poctu odpracovaneho casu ak to tak budem robit
     }
 
-    public void testing(){
+    public void customerArrivedProcessing(){
+        calendar.add(new CustomerArrived(currentTime + arrivalGenerator.nextValue(), this));
+    }
+
+    public void customerOrderProcessing(){
+
+    }
+
+    public void testing(TestingEvent event){
         calendar.add(new TestingEvent(currentTime + 1,this));
+        lastProcessedEvent = event;
     }
 
     public String getStatesOfSimulation(){
@@ -115,6 +135,16 @@ public class BeautySalonSimulator extends EventSimulator{
                 "Rad pred upravou ucesu: " + hairstyleWaitingQueue.size() + " \n\t Rad pred licenim: "
                 + makeupWaitingQueue.size() + "\n\tRad pred platenim: "+ paymentWaitingQueue.size()
                 + "\nStavy personalu: - \nStavy zakaznikov: -";
+        return result;
+    }
+
+    public String getCalendar(){
+        String result = "";
+        PriorityQueue<Event> cal = calendar;
+        for (Event e :
+                cal) {
+            result += converTime(e.getTime())+ "\t" + e.getNameOfTheEvent() + "\n";
+        }
         return result;
     }
 

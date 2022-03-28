@@ -1,6 +1,7 @@
 package Gui;
 
 import Simulation.BeautySalonSimulator;
+import Simulation.Events.Event;
 import Simulation.Simulator;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -44,12 +45,17 @@ public class BeautySalonGui implements ISimDelegate{
     private JTextPane statisticsTextPane;
     private JTextPane statesOfSystemTextPane;
     private JLabel isPausedLabel;
+    private JLabel calendarLabel;
+    private JLabel lastProcesseedEventTextLabel;
+    private JLabel lastProcessedEventLabel;
+    private JTextPane calendarTextPane;
 
     private DefaultXYDataset datasetLineChart;
     private XYSeries lineChartXYSeries;
     private JFreeChart lineChart;
     private BeautySalonSimulator simulator;
     private String lastStatesValues;
+    private String lastCalendar;
 
     public BeautySalonGui() {
         frame = new JFrame("Beauty salon");
@@ -153,8 +159,20 @@ public class BeautySalonGui implements ISimDelegate{
         String statesOfSystem = sim.getStatesOfSimulation();
         //aby vykreslovalo len ked nastala zmena nejakej hondoty
         if (!statesOfSystem.equals(lastStatesValues)) {
-            statesOfSystemTextPane.setText(sim.getStatesOfSimulation());
+            statesOfSystemTextPane.setText(statesOfSystem);
             lastStatesValues = statesOfSystemTextPane.getText();
+        }
+
+        String calendar = sim.getCalendar();
+        if (!calendar.equals(lastCalendar)){
+            calendarTextPane.setText(calendar);
+            lastCalendar = calendarTextPane.getText();
+        }
+
+        //v spracovanych nezobrazuje systemove udalosti
+        if (sim.getLastProcessedEvent() != null){
+            Event e = sim.getLastProcessedEvent();
+            lastProcessedEventLabel.setText(sim.converTime(e.getTime()) + "  " + e.getNameOfTheEvent());
         }
     }
 
@@ -180,6 +198,8 @@ public class BeautySalonGui implements ISimDelegate{
     }
 
     private void setDeafultText(){
+        lastProcessedEventLabel.setText("-");
+        calendarTextPane.setText("");
         isPausedLabel.setVisible(false);
         simulationTimeLabel.setText(simulator.getCurrentTime());
         numberOfMakeupArtistsTextField.setText("1");
@@ -195,5 +215,6 @@ public class BeautySalonGui implements ISimDelegate{
         statesOfSystemTextPane.setText(text);
         statisticsTextPane.setText("Statistiky: -");
         lastStatesValues = statesOfSystemTextPane.getText();
+        lastCalendar = calendarTextPane.getText();
     }
 }

@@ -5,6 +5,7 @@ import Simulation.Simulator;
 public abstract class Event implements Comparable<Event>{
     protected double time;
     protected Simulator simulationCore;
+    protected String nameOfTheEvent;
 
     public Event(double time, Simulator simulationCore) {
         this.time = time;
@@ -27,5 +28,9 @@ public abstract class Event implements Comparable<Event>{
 
     public double getTime() {
         return time;
+    }
+
+    public String getNameOfTheEvent() {
+        return nameOfTheEvent;
     }
 }

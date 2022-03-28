@@ -5,6 +5,7 @@ import Simulation.Simulator;
 public class WritingOrderBeginning extends Event{
     public WritingOrderBeginning(double time, Simulator simulationCore) {
         super(time, simulationCore);
+        nameOfTheEvent = "Zaciatok zapisu objednavky";
     }
 
     @Override

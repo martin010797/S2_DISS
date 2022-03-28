@@ -5,6 +5,7 @@ import Simulation.Simulator;
 public class WritingOrderEnd extends Event{
     public WritingOrderEnd(double time, Simulator simulationCore) {
         super(time, simulationCore);
+        nameOfTheEvent = "Koniec zapisu objednavky";
     }
 
     @Override
