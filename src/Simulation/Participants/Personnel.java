@@ -5,6 +5,11 @@ public class Personnel extends Person implements Comparable<Personnel>{
     protected boolean isWorking;
     //protected double busyUntil;
 
+    public Personnel() {
+        workedTimeTogether = 0;
+        isWorking = false;
+    }
+
     @Override
     public int compareTo(Personnel o) {
         if (this.workedTimeTogether < o.workedTimeTogether){
@@ -14,5 +19,21 @@ public class Personnel extends Person implements Comparable<Personnel>{
         }else {
             return 0;
         }
+    }
+
+    public double getWorkedTimeTogether() {
+        return workedTimeTogether;
+    }
+
+    public void setWorkedTimeTogether(double workedTimeTogether) {
+        this.workedTimeTogether = workedTimeTogether;
+    }
+
+    public boolean isWorking() {
+        return isWorking;
+    }
+
+    public void setWorking(boolean working) {
+        isWorking = working;
     }
 }

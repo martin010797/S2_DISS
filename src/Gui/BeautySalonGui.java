@@ -94,6 +94,9 @@ public class BeautySalonGui implements ISimDelegate{
                 fastSimulationRadioButton.setEnabled(false);
                 slowSimulationRadioButton.setEnabled(false);
                 isPausedLabel.setVisible(false);
+                simulator.setNumberOfHairstylists(Integer.parseInt(numberOfHairdressersTextField.getText()));
+                simulator.setNumberOfMakeupArtists(Integer.parseInt(numberOfMakeupArtistsTextField.getText()));
+                simulator.setNumberOfReceptionists(Integer.parseInt(numberOfReceptionistsTextField.getText()));
                 simulator.simulate();
             }
         });

@@ -167,7 +167,44 @@ public class BeautySalonSimulator extends EventSimulator{
                 + makeupWaitingQueue.size() + "\n  Rad pred platenim: "+ paymentWaitingQueue.size()
                 + "\nPocet prichodov zakaznikov: " + numberOfArrivedCustomers +
                 "\nPocet obsluzenych zakaznikov: " + numberOfServedCustomers +" " +
-                "\nStavy personalu: - \nStavy zakaznikov v systeme: ";
+                "\nStavy personalu: ";
+        result += "\n  Recepcia:";
+        for (int i = 0; i < listOfReceptionists.size(); i++){
+            Receptionist r = listOfReceptionists.get(i);
+            String isWorkig = "";
+            if (r.isWorking()){
+                isWorkig = "Ano";
+            }else {
+                isWorkig = "Nie";
+            }
+            result += "\n    Recepcny c." + (i+1) + ":" + "\n      Odpracovany cas: " + r.getWorkedTimeTogether() +
+                    "\n      Pracuje: " + isWorkig;
+        }
+        result += "\n  Kadernicky:";
+        for (int i = 0; i < listOfHairStylists.size(); i++){
+            Hairstylist h = listOfHairStylists.get(i);
+            String isWorkig = "";
+            if (h.isWorking()){
+                isWorkig = "Ano";
+            }else {
+                isWorkig = "Nie";
+            }
+            result += "\n    Kadernicka c." + (i+1) + ":" + "\n      Odpracovany cas: " + h.getWorkedTimeTogether() +
+                    "\n      Pracuje: " + isWorkig;
+        }
+        result += "\n  Kozmeticky:";
+        for (int i = 0; i < listOfMakeupArtists.size(); i++){
+            MakeUpArtist m = listOfMakeupArtists.get(i);
+            String isWorkig = "";
+            if (m.isWorking()){
+                isWorkig = "Ano";
+            }else {
+                isWorkig = "Nie";
+            }
+            result += "\n    Kozmeticka c." + (i+1) + ":" + "\n      Odpracovany cas: " + m.getWorkedTimeTogether() +
+                    "\n      Pracuje: " + isWorkig;
+        }
+        result += "\nStavy zakaznikov v systeme: ";
         for (int i = 0; i < listOfCustomersInSystem.size(); i++){
             Customer c = listOfCustomersInSystem.get(i);
             if (c.getArriveTime() < currentTime){
