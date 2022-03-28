@@ -162,7 +162,6 @@ public class BeautySalonGui implements ISimDelegate{
             statesOfSystemTextPane.setText(statesOfSystem);
             lastStatesValues = statesOfSystemTextPane.getText();
         }
-
         String calendar = sim.getCalendar();
         if (!calendar.equals(lastCalendar)){
             calendarTextPane.setText(calendar);
@@ -209,9 +208,9 @@ public class BeautySalonGui implements ISimDelegate{
         deltaTTextField.setText("400");
         numberOfReplicationsTextField.setText("100000");
         lengthOfSimulationTextField.setText("1");
-        String text = "Pocet ludi v radoch: -\n\tRad pred recepciou: -\n\tRad pred upravou ucesu: -" +
-                "\n\tRad pred licenim: -\n\tRad pred platenim: -" +
-                "\nStavy personalu: - \nStavy zakaznikov: -";
+        String text = "Pocet ludi v radoch: -\n  Rad pred recepciou: -\n  Rad pred upravou ucesu: -" +
+                "\n  Rad pred licenim: -\n  Rad pred platenim: - \nPocet prichodov zakaznikov: -" +
+                "\nPocet obsluzenych zakaznikov: -\nStavy personalu: - \nStavy zakaznikov v systeme: -";
         statesOfSystemTextPane.setText(text);
         statisticsTextPane.setText("Statistiky: -");
         lastStatesValues = statesOfSystemTextPane.getText();

@@ -1,15 +1,18 @@
 package Simulation.Events;
 
+import Simulation.Participants.Customer;
 import Simulation.Simulator;
 
 public abstract class Event implements Comparable<Event>{
     protected double time;
     protected Simulator simulationCore;
     protected String nameOfTheEvent;
+    protected Customer customer;
 
-    public Event(double time, Simulator simulationCore) {
+    public Event(double time, Simulator simulationCore, Customer customer) {
         this.time = time;
         this.simulationCore = simulationCore;
+        this.customer = customer;
     }
 
     public abstract void execute();

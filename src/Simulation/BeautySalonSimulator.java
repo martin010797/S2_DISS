@@ -6,10 +6,7 @@ import Simulation.Events.CustomerArrived;
 import Simulation.Events.Event;
 import Simulation.Events.SystemEvent;
 import Simulation.Events.TestingEvent;
-import Simulation.Participants.Customer;
-import Simulation.Participants.Hairstylist;
-import Simulation.Participants.MakeUpArtist;
-import Simulation.Participants.Receptionist;
+import Simulation.Participants.*;
 
 import java.util.*;
 
@@ -26,6 +23,9 @@ public class BeautySalonSimulator extends EventSimulator{
     private int numberOfMakeupArtists;
     private int numberOfHairstylists;
 
+    private int numberOfArrivedCustomers;
+    private int numberOfServedCustomers;
+
     private Queue<Event> receptionWaitingQueue;
     private Queue<Event> hairstyleWaitingQueue;
     private Queue<Event> makeupWaitingQueue;
@@ -35,6 +35,10 @@ public class BeautySalonSimulator extends EventSimulator{
     private List<Hairstylist> listOfHairStylists;
     private List<MakeUpArtist> listOfMakeupArtists;
     private List<Receptionist> listOfReceptionists;
+
+    private boolean isSomeHairstylistFree;
+    private boolean isSomeMakeupArtistsFree;
+    private boolean isSomeReceptionistFree;
 
     //zoradene podla
     /*protected PriorityQueue<MakeUpArtist> freeMakeUpArtistsByWorktime;
@@ -64,19 +68,40 @@ public class BeautySalonSimulator extends EventSimulator{
         seed = new Random();
         exponentialGeneratorBase = new Random(seed.nextInt());
         arrivalGenerator = new ExpGen(exponentialGeneratorBase, 3600/8);
+
+        numberOfArrivedCustomers = 0;
+        numberOfServedCustomers = 0;
     }
 
     @Override
     public void doBeforeReplications() {
+        if (numberOfHairstylists > 0){
+            isSomeHairstylistFree = true;
+        }else {
+            isSomeHairstylistFree = false;
+        }
+        if (numberOfMakeupArtists > 0){
+            isSomeMakeupArtistsFree = true;
+        }else {
+            isSomeMakeupArtistsFree = false;
+        }
+        if (numberOfReceptionists > 0){
+            isSomeReceptionistFree = true;
+        }else {
+            isSomeReceptionistFree = false;
+        }
+        numberOfArrivedCustomers = 0;
         calendar.clear();
         lastProcessedEvent = null;
         currentTime = 0;
-        //TODO
-        // pridanie prvej udalosti prichodu namiesto testovacej
-        //calendar.add(new CustomerArrived(arrivalGenerator.nextValue(), this));
-        calendar.add(new TestingEvent(0,this));
+
+        double time = currentTime + arrivalGenerator.nextValue();
+        Customer arrivedCustomer = new Customer(time);
+        listOfCustomersInSystem.add(arrivedCustomer);
+        calendar.add(new CustomerArrived(time, this, arrivedCustomer));
+        calendar.add(new TestingEvent(0,this, null));
         if (!maxSpeed){
-            calendar.add(new SystemEvent(currentTime,this));
+            calendar.add(new SystemEvent(currentTime,this, null));
         }
         addPersonnel();
     }
@@ -116,8 +141,14 @@ public class BeautySalonSimulator extends EventSimulator{
         // mozno pridat vsade aj do priority queue podla poctu odpracovaneho casu ak to tak budem robit
     }
 
-    public void customerArrivedProcessing(){
-        calendar.add(new CustomerArrived(currentTime + arrivalGenerator.nextValue(), this));
+    public void customerArrivedProcessing(CustomerArrived event){
+        double time = currentTime + arrivalGenerator.nextValue();
+        Customer arrivedCustomer = new Customer(time);
+        listOfCustomersInSystem.add(arrivedCustomer);
+
+        calendar.add(new CustomerArrived(time, this, arrivedCustomer));
+        lastProcessedEvent = event;
+        numberOfArrivedCustomers++;
     }
 
     public void customerOrderProcessing(){
@@ -125,24 +156,77 @@ public class BeautySalonSimulator extends EventSimulator{
     }
 
     public void testing(TestingEvent event){
-        calendar.add(new TestingEvent(currentTime + 1,this));
+        calendar.add(new TestingEvent(currentTime + 1,this, null));
         lastProcessedEvent = event;
     }
 
     public String getStatesOfSimulation(){
         String result = "";
-        result += "Pocet ludi v radoch: -\n\t Rad pred recepciou: " + receptionWaitingQueue.size() + " \n\t" +
-                "Rad pred upravou ucesu: " + hairstyleWaitingQueue.size() + " \n\t Rad pred licenim: "
-                + makeupWaitingQueue.size() + "\n\tRad pred platenim: "+ paymentWaitingQueue.size()
-                + "\nStavy personalu: - \nStavy zakaznikov: -";
+        result += "Pocet ludi v radoch: -\n  Rad pred recepciou: " + receptionWaitingQueue.size() + " \n  " +
+                "Rad pred upravou ucesu: " + hairstyleWaitingQueue.size() + " \n  Rad pred licenim: "
+                + makeupWaitingQueue.size() + "\n  Rad pred platenim: "+ paymentWaitingQueue.size()
+                + "\nPocet prichodov zakaznikov: " + numberOfArrivedCustomers +
+                "\nPocet obsluzenych zakaznikov: " + numberOfServedCustomers +" " +
+                "\nStavy personalu: - \nStavy zakaznikov v systeme: ";
+        for (int i = 0; i < listOfCustomersInSystem.size(); i++){
+            Customer c = listOfCustomersInSystem.get(i);
+            if (c.getArriveTime() < currentTime){
+                result += "\n  Zakaznik: \n    Cas prichodu: " + converTime(c.getArriveTime()) +
+                        "\n    Aktualne miesto v systeme: " +
+                        convertCurrentPosition(c.getCurrentPosition());
+            }
+        }
         return result;
+    }
+
+    public String convertCurrentPosition(CurrentPosition currentPosition){
+        switch (currentPosition){
+            case PAYING:{
+                return "Platba";
+            }
+            case ARRIVED:{
+                return "Prichod";
+            }
+            case MAKE_UP:{
+                return "Licenie";
+            }
+            case ORDERING:{
+                return "Zadavanie objednavky";
+            }
+            case HAIR_STYLING:{
+                return "Uprava ucesu";
+            }
+            case CLEANING_SKIN:{
+                return "Cistenie pleti";
+            }
+            case IN_QUEUE_FOR_PAY:{
+                return "Rad platba";
+            }
+            case IN_QUEUE_FOR_MAKEUP:{
+                return "Rad licenie";
+            }
+            case IN_QUEUE_FOR_CLEANING:{
+                return "Rad cistenie pleti";
+            }
+            case IN_QUEUE_FOR_ORDERING:{
+                return "Rad pre objednavku";
+            }
+            case IN_QUEUE_FOR_HAIRSTYLE:{
+                return "Rad uprava ucesu";
+            }
+            default:{
+                return "Nezname";
+            }
+        }
     }
 
     public String getCalendar(){
         String result = "";
-        PriorityQueue<Event> cal = calendar;
-        for (Event e :
-                cal) {
+        PriorityQueue<Event> cal = new PriorityQueue<>(calendar);
+        int size = cal.size();
+        for (int i = 0; i < size; i++){
+            Event e = cal.poll();
+            //if (!(e instanceof SystemEvent))
             result += converTime(e.getTime())+ "\t" + e.getNameOfTheEvent() + "\n";
         }
         return result;
@@ -155,7 +239,7 @@ public class BeautySalonSimulator extends EventSimulator{
             e.printStackTrace();
         }
         double seconds = (double) deltaT/1000;
-        calendar.add(new SystemEvent(currentTime+seconds,this));
+        calendar.add(new SystemEvent(currentTime+seconds,this, null));
     }
 
     public boolean isMaxSpeed() {
@@ -184,5 +268,13 @@ public class BeautySalonSimulator extends EventSimulator{
 
     public void setNumberOfHairstylists(int numberOfHairstylists) {
         this.numberOfHairstylists = numberOfHairstylists;
+    }
+
+    public int getNumberOfArrivedCustomers() {
+        return numberOfArrivedCustomers;
+    }
+
+    public int getNumberOfServedCustomers() {
+        return numberOfServedCustomers;
     }
 }

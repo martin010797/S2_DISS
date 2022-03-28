@@ -3,6 +3,7 @@ package Simulation.Participants;
 public class Personnel extends Person implements Comparable<Personnel>{
     protected double workedTimeTogether;
     protected boolean isWorking;
+    //protected double busyUntil;
 
     @Override
     public int compareTo(Personnel o) {

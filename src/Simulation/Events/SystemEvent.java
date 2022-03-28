@@ -1,11 +1,13 @@
 package Simulation.Events;
 
 import Simulation.BeautySalonSimulator;
+import Simulation.Participants.Customer;
 import Simulation.Simulator;
 
 public class SystemEvent extends Event{
-    public SystemEvent(double time, Simulator simulationCore) {
-        super(time, simulationCore);
+
+    public SystemEvent(double time, Simulator simulationCore, Customer customer) {
+        super(time, simulationCore, customer);
         nameOfTheEvent = "Systemova udalost";
     }
 
