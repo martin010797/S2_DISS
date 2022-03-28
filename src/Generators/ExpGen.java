@@ -11,10 +11,10 @@ public class ExpGen {
         this.e = e;
     }
 
-    public int nextValue(){
+    public double nextValue(){
         double randValue = randGen.nextDouble();
         double lambda = (double)1/e;
         //int value = (int)(-(Math.log(1-randValue))/(lambda));
-        return (int)(((double)(-1)/(lambda))*(Math.log(randValue)));
+        return ((double)(-1)/(lambda))*(Math.log(randValue));
     }
 }
