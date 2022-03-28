@@ -6,7 +6,6 @@ public enum CurrentPosition {
     ORDERING,
     IN_QUEUE_FOR_HAIRSTYLE,
     IN_QUEUE_FOR_MAKEUP,
-    IN_QUEUE_FOR_CLEANING,
     CLEANING_SKIN,
     MAKE_UP,
     HAIR_STYLING,

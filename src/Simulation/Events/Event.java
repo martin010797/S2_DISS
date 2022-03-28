@@ -36,4 +36,12 @@ public abstract class Event implements Comparable<Event>{
     public String getNameOfTheEvent() {
         return nameOfTheEvent;
     }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
 }

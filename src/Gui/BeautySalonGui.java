@@ -174,7 +174,7 @@ public class BeautySalonGui implements ISimDelegate{
         //v spracovanych nezobrazuje systemove udalosti
         if (sim.getLastProcessedEvent() != null){
             Event e = sim.getLastProcessedEvent();
-            lastProcessedEventLabel.setText(sim.converTime(e.getTime()) + "  " + e.getNameOfTheEvent());
+            lastProcessedEventLabel.setText(sim.converTimeOfSystem(e.getTime()) + "  " + e.getNameOfTheEvent());
         }
     }
 
