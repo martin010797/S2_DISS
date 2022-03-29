@@ -56,10 +56,10 @@ public abstract class EventSimulator extends Simulator{
     }
 
     public String getCurrentTime() {
-        return converTimeOfSystem(currentTime);
+        return convertTimeOfSystem(currentTime);
     }
 
-    public String converTimeOfSystem(double pTime){
+    public String convertTimeOfSystem(double pTime){
         int seconds = (int)pTime % 60;
         int minutes = ((int)pTime / 60) % 60;
         if (minutes == 59 && seconds == 59){

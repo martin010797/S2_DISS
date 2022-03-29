@@ -16,10 +16,10 @@ import java.util.Random;
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        Tests tests = new Tests();
-        tests.exponentialTest();
+        //Tests tests = new Tests();
+        //tests.exponentialTest();
         //tests.empiricalTest();
         //BeautySalonSimulator simulator = new BeautySalonSimulator(1,100);
-        //BeautySalonGui gui = new BeautySalonGui();
+        BeautySalonGui gui = new BeautySalonGui();
     }
 }

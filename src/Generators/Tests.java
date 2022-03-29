@@ -17,7 +17,7 @@ public class Tests {
 
     public void exponentialTest(){
         exponentialBaseGenerator = new Random();
-        ExpGen expGen = new ExpGen(exponentialBaseGenerator,240);
+        ExpGen expGen = new ExpGen(exponentialBaseGenerator,200);
         try {
             File myObj = new File("exp.txt");
             if (myObj.createNewFile()) {

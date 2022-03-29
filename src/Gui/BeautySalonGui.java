@@ -29,9 +29,7 @@ public class BeautySalonGui implements ISimDelegate{
     private JRadioButton fastSimulationRadioButton;
     private JLabel NumberOfReplicationsLabel;
     private JTextField numberOfReplicationsTextField;
-    private JLabel lengthOfSimulationLabel;
     private JLabel lengthOfSleepLabel;
-    private JTextField lengthOfSimulationTextField;
     private JTextField lengthOfSleepTextField;
     private JLabel deltaTLabel;
     private JTextField deltaTTextField;
@@ -49,6 +47,7 @@ public class BeautySalonGui implements ISimDelegate{
     private JLabel lastProcesseedEventTextLabel;
     private JLabel lastProcessedEventLabel;
     private JTextPane calendarTextPane;
+    private JRadioButton chartOutputRadioButton;
 
     private DefaultXYDataset datasetLineChart;
     private XYSeries lineChartXYSeries;
@@ -78,10 +77,9 @@ public class BeautySalonGui implements ISimDelegate{
         ButtonGroup speedOfTheSimulationButtonGroup = new ButtonGroup();
         speedOfTheSimulationButtonGroup.add(fastSimulationRadioButton);
         speedOfTheSimulationButtonGroup.add(slowSimulationRadioButton);
+        speedOfTheSimulationButtonGroup.add(chartOutputRadioButton);
 
         slowSimulationRadioButton.setSelected(true);
-        lengthOfSimulationLabel.setVisible(false);
-        lengthOfSimulationTextField.setVisible(false);
         NumberOfReplicationsLabel.setVisible(false);
         numberOfReplicationsTextField.setVisible(false);
 
@@ -93,6 +91,7 @@ public class BeautySalonGui implements ISimDelegate{
                 simulator.setSleepLength(Integer.parseInt(lengthOfSleepTextField.getText()));
                 fastSimulationRadioButton.setEnabled(false);
                 slowSimulationRadioButton.setEnabled(false);
+                chartOutputRadioButton.setEnabled(false);
                 isPausedLabel.setVisible(false);
                 simulator.setNumberOfHairstylists(Integer.parseInt(numberOfHairdressersTextField.getText()));
                 simulator.setNumberOfMakeupArtists(Integer.parseInt(numberOfMakeupArtistsTextField.getText()));
@@ -106,14 +105,13 @@ public class BeautySalonGui implements ISimDelegate{
                 simulator.stopSimulation();
                 fastSimulationRadioButton.setEnabled(true);
                 slowSimulationRadioButton.setEnabled(true);
+                chartOutputRadioButton.setEnabled(true);
                 isPausedLabel.setVisible(false);
             }
         });
         fastSimulationRadioButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                lengthOfSimulationLabel.setVisible(true);
-                lengthOfSimulationTextField.setVisible(true);
                 NumberOfReplicationsLabel.setVisible(true);
                 numberOfReplicationsTextField.setVisible(true);
                 lengthOfSleepLabel.setVisible(false);
@@ -121,13 +119,13 @@ public class BeautySalonGui implements ISimDelegate{
                 deltaTLabel.setVisible(false);
                 deltaTTextField.setVisible(false);
                 changeTheSpeedButton.setVisible(false);
+                numberOfHairdressersLabel.setVisible(true);
+                numberOfHairdressersTextField.setVisible(true);
             }
         });
         slowSimulationRadioButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                lengthOfSimulationLabel.setVisible(false);
-                lengthOfSimulationTextField.setVisible(false);
                 NumberOfReplicationsLabel.setVisible(false);
                 numberOfReplicationsTextField.setVisible(false);
                 lengthOfSleepLabel.setVisible(true);
@@ -135,6 +133,8 @@ public class BeautySalonGui implements ISimDelegate{
                 deltaTLabel.setVisible(true);
                 deltaTTextField.setVisible(true);
                 changeTheSpeedButton.setVisible(true);
+                numberOfHairdressersLabel.setVisible(true);
+                numberOfHairdressersTextField.setVisible(true);
             }
         });
         pauseSimulationButton.addActionListener(new ActionListener() {
@@ -150,6 +150,20 @@ public class BeautySalonGui implements ISimDelegate{
             public void actionPerformed(ActionEvent e) {
                 simulator.setDeltaT(Integer.parseInt(deltaTTextField.getText()));
                 simulator.setSleepLength(Integer.parseInt(lengthOfSleepTextField.getText()));
+            }
+        });
+        chartOutputRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                NumberOfReplicationsLabel.setVisible(true);
+                numberOfReplicationsTextField.setVisible(true);
+                lengthOfSleepLabel.setVisible(false);
+                lengthOfSleepTextField.setVisible(false);
+                deltaTLabel.setVisible(false);
+                deltaTTextField.setVisible(false);
+                changeTheSpeedButton.setVisible(false);
+                numberOfHairdressersLabel.setVisible(false);
+                numberOfHairdressersTextField.setVisible(false);
             }
         });
     }
@@ -174,7 +188,7 @@ public class BeautySalonGui implements ISimDelegate{
         //v spracovanych nezobrazuje systemove udalosti
         if (sim.getLastProcessedEvent() != null){
             Event e = sim.getLastProcessedEvent();
-            lastProcessedEventLabel.setText(sim.converTimeOfSystem(e.getTime()) + "  " + e.getNameOfTheEvent());
+            lastProcessedEventLabel.setText(sim.convertTimeOfSystem(e.getTime()) + "  " + e.getNameOfTheEvent());
         }
     }
 
@@ -183,8 +197,8 @@ public class BeautySalonGui implements ISimDelegate{
         lineChartXYSeries = new XYSeries("waitingQueue");
         lineChart = ChartFactory.createXYLineChart(
                 "Priemerne pocty cakajucich v rade na recepcii",
-                "Cas",
-                "Dlzka radu",
+                "Pocet kaderniciek",
+                "Priemerny pocet cakajucich v rade",
                 datasetLineChart,
                 PlotOrientation.VERTICAL,
                 false,
@@ -210,7 +224,6 @@ public class BeautySalonGui implements ISimDelegate{
         lengthOfSleepTextField.setText("400");
         deltaTTextField.setText("400");
         numberOfReplicationsTextField.setText("100000");
-        lengthOfSimulationTextField.setText("1");
         String text = "Pocet ludi v radoch: -\n  Rad pred recepciou: -\n  Rad pred upravou ucesu: -" +
                 "\n  Rad pred licenim: -\n  Rad pred platenim: - \nPocet prichodov zakaznikov: -" +
                 "\nPocet obsluzenych zakaznikov: -\nStavy personalu: - \nStavy zakaznikov v systeme: -";

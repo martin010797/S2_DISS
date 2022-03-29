@@ -6,12 +6,12 @@ Data File: D:\Martin\ING\LetnySemester\DISS\sem\S2\S2\exp.txt
 
 Function       Sq Error
 -----------------------
-Erlang         3.65e-007
-Exponential    3.65e-007
-Beta           0.000746
-Weibull        0.000925
-Lognormal      0.00619
-Normal         0.05
-Triangular     0.116
-Uniform        0.144
-Gamma          1.52
+Erlang         7.09e-007
+Exponential    7.09e-007
+Gamma          1.92e-005
+Weibull        0.000211
+Beta           0.000591
+Lognormal      0.00637
+Normal         0.051
+Triangular     0.12
+Uniform        0.148
