@@ -19,4 +19,8 @@ public class SkinCleaningBeginning extends Event{
         BeautySalonSimulator simulator = (BeautySalonSimulator) simulationCore;
         simulator.skinCleaningBeginningProcess(this);
     }
+
+    public MakeUpArtist getChosenMakeupArtist() {
+        return chosenMakeupArtist;
+    }
 }

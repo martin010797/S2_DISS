@@ -19,6 +19,7 @@ public class Main {
         //Tests tests = new Tests();
         //tests.exponentialTest();
         //tests.empiricalTest();
+        //tests.triangularTest();
         //BeautySalonSimulator simulator = new BeautySalonSimulator(1,100);
         BeautySalonGui gui = new BeautySalonGui();
     }

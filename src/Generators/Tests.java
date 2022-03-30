@@ -186,6 +186,51 @@ public class Tests {
         System.out.println("Druhy rozsah pocet hodnot(0.3): " + generatedInRange[1]);
         System.out.println("Treti rozsah pocet hodnot(0.5): " + generatedInRange[2]);
         System.out.println("Mimo rozsah pocet hodnot: " + generatedInRange[3]);
+    }
 
+    public void triangularTest(){
+        Triangular triangularGen = new Triangular(seedGenerator.nextInt(),360,900,540);
+        //ExpGen expGen = new ExpGen(exponentialBaseGenerator,200);
+        try {
+            File myObj = new File("triangular.txt");
+            if (myObj.createNewFile()) {
+                System.out.println("File created: " + myObj.getName());
+            } else {
+                System.out.println("File already exists.");
+            }
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        FileWriter myWriter = null;
+        try {
+            myWriter = new FileWriter("triangular.txt");
+            myWriter.write("");
+            myWriter.close();
+        } catch (IOException e) {
+            System.out.println("An error occurred while writing to file.");
+            e.printStackTrace();
+        }
+        try {
+            myWriter = new FileWriter("triangular.txt", true);
+        } catch (IOException e) {
+            System.out.println("An error occurred while writing to file.");
+            e.printStackTrace();
+        }
+        for(int i = 0; i < 1000000; i++){
+            try {
+                myWriter.write(triangularGen.nextValue() + "   ");
+            } catch (IOException e) {
+                System.out.println("An error occurred while writing to file.");
+                e.printStackTrace();
+            }
+        }
+        try {
+            myWriter.close();
+            System.out.println("Successfully closed file.");
+        } catch (IOException e) {
+            System.out.println("An error occurred while closing file.");
+            e.printStackTrace();
+        }
     }
 }

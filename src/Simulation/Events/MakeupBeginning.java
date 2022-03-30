@@ -19,4 +19,8 @@ public class MakeupBeginning extends Event{
         BeautySalonSimulator simulator = (BeautySalonSimulator) simulationCore;
         simulator.makeupBeginningProcess(this);
     }
+
+    public MakeUpArtist getChosenMakeupArtist() {
+        return chosenMakeupArtist;
+    }
 }

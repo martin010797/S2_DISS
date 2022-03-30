@@ -19,4 +19,8 @@ public class HairstyleBeginning extends Event{
         BeautySalonSimulator simulator = (BeautySalonSimulator) simulationCore;
         simulator.hairstyleBeginningProcess(this);
     }
+
+    public Hairstylist getChosenHairstylist() {
+        return chosenHairstylist;
+    }
 }

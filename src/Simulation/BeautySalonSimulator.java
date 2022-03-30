@@ -257,8 +257,6 @@ public class BeautySalonSimulator extends EventSimulator{
 
     public void customerOrderProcessingEnded(WritingOrderEnd event){
         Customer customer = event.getCustomer();
-        //toto je temp aby bolo vidno len zmenu ze uz odisiel z tadeto
-        //customer.setCurrentPosition(CurrentPosition.IN_QUEUE_FOR_HAIRSTYLE);
         Receptionist receptionist = event.getChosenReceptionist();
 
         //update pre recepcnu
@@ -385,17 +383,30 @@ public class BeautySalonSimulator extends EventSimulator{
 
     public void hairstyleBeginningProcess(HairstyleBeginning event){
         Customer customer = event.getCustomer();
+        customer.setCurrentPosition(CurrentPosition.HAIR_STYLING);
         //TODO
+
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
+        //toto bude nakoniec v ende udalosti(pre vsetky tri sluzby) kde bude planovat novu sluzbu(teda sa uvolni miesot v rade)
+        //naplanovanie koncu
+        lastProcessedEvent = event;
     }
     public void makeupBeginningProcess(MakeupBeginning event){
-        //TODO
-        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
-    }
-    public void skinCleaningBeginningProcess(SkinCleaningBeginning event){
+        Customer customer = event.getCustomer();
+        customer.setCurrentPosition(CurrentPosition.MAKE_UP);
         //TODO
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
 
+        //naplanovanie koncu
+        lastProcessedEvent = event;
+    }
+    public void skinCleaningBeginningProcess(SkinCleaningBeginning event){
+        Customer customer = event.getCustomer();
+        customer.setCurrentPosition(CurrentPosition.CLEANING_SKIN);
+        //TODO
+        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
+        //naplanovanie koncu
+        lastProcessedEvent = event;
     }
 
     public void testing(TestingEvent event){
