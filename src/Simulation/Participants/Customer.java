@@ -1,6 +1,6 @@
 package Simulation.Participants;
 
-public class Customer extends Person{
+public class Customer extends Person implements Comparable<Customer>{
     private double arriveTime;
     private CurrentPosition currentPosition;
 
@@ -8,12 +8,15 @@ public class Customer extends Person{
     private boolean makeup;
     private boolean cleaning;
 
-    public Customer(double arriveTime) {
+    private boolean isPaying;
+
+    public Customer(double arriveTime){
         this.arriveTime = arriveTime;
         currentPosition = CurrentPosition.ARRIVED;
         hairstyle = false;
         makeup = false;
         cleaning = false;
+        isPaying = false;
     }
 
     public CurrentPosition getCurrentPosition() {
@@ -50,5 +53,24 @@ public class Customer extends Person{
 
     public void setCleaning(boolean cleaning) {
         this.cleaning = cleaning;
+    }
+
+    public boolean isPaying() {
+        return isPaying;
+    }
+
+    public void setPaying(boolean paying) {
+        isPaying = paying;
+    }
+
+    @Override
+    public int compareTo(Customer o) {
+        if (this.isPaying && !o.isPaying){
+            return -1;
+        }else if(!this.isPaying && o.isPaying){
+            return 1;
+        }else {
+            return 0;
+        }
     }
 }

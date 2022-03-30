@@ -36,7 +36,7 @@ public class BeautySalonSimulator extends EventSimulator{
     private int numberOfArrivedCustomers;
     private int numberOfServedCustomers;
 
-    private Queue<Customer> receptionWaitingQueue;
+    private PriorityQueue<Customer> receptionWaitingQueue;
     private Queue<Customer> hairstyleWaitingQueue;
     private Queue<Customer> makeupWaitingQueue;
     private Queue<Customer> paymentWaitingQueue;
@@ -68,7 +68,7 @@ public class BeautySalonSimulator extends EventSimulator{
         super(pNumberOfReplications);
         this.lengthOfSimulation = lengthOfSimulation;
 
-        receptionWaitingQueue = new LinkedList<>();
+        receptionWaitingQueue = new PriorityQueue<>();
         hairstyleWaitingQueue = new LinkedList<>();
         makeupWaitingQueue = new LinkedList<>();
         paymentWaitingQueue = new LinkedList<>();
@@ -375,6 +375,8 @@ public class BeautySalonSimulator extends EventSimulator{
             }
         }
 
+        //TODO prerobit tak aby queue bol priorityQueue a tuto teda aby overoval ci plati alebo nie(podla toho by
+        // vytvoril even pre vybavovanie objednavky alebo pre platbu)
         //planovanie dalsieho vybavovania objednavky
         //pokial je niekto v rade pred recepciou nech si ho priradi niekto z recepcie
         if (!receptionWaitingQueue.isEmpty() && (hairstyleWaitingQueue.size() + makeupWaitingQueue.size()) <= 10){
@@ -405,6 +407,7 @@ public class BeautySalonSimulator extends EventSimulator{
             chosenReceptionist.setWorking(true);
             calendar.add(
                     new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
+            //TODO toto aj inam?
             sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
         }
         lastProcessedEvent = event;
@@ -478,10 +481,6 @@ public class BeautySalonSimulator extends EventSimulator{
                         event.getChosenMakeupArtist())
         );
         lastProcessedEvent = event;
-        //TODO
-        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
-
-        //naplanovanie koncu
     }
     public void skinCleaningBeginningProcess(SkinCleaningBeginning event){
         Customer customer = event.getCustomer();
@@ -496,24 +495,182 @@ public class BeautySalonSimulator extends EventSimulator{
                         event.getChosenMakeupArtist())
         );
         lastProcessedEvent = event;
-        //TODO
-        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
-        //naplanovanie koncu
     }
 
     public void skinCleaningEndProcess(SkinCleaningEnd event){
         Customer customer = event.getCustomer();
+        MakeUpArtist makeUpArtist = event.getChosenMakeupArtist();
+        //temp
         customer.setCurrentPosition(CurrentPosition.PAYING);
+
+        //update pre kozmeticku
+        makeUpArtist.setWorking(false);
+        //TODO na toto nastavovanie pozor aby som potom nenastavil v podstate predbehnutie ze som dal ze teraz sa jedna uvolnila
+        isSomeMakeupArtistsFree = true;
+        Double workedTime = makeUpArtist.getWorkedTimeTogether();
+        makeUpArtist.setWorkedTimeTogether(workedTime + currentTime - event.getCleaningStartTime());
+        //update pre customera
+        customer.setCleaning(false);
+        //TODO
+        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
     }
 
     public void makeupEndProcess(MakeupEnd event){
         Customer customer = event.getCustomer();
+        MakeUpArtist makeUpArtist = event.getChosenMakeupArtist();
+        //temp
         customer.setCurrentPosition(CurrentPosition.PAYING);
+
+        //update pre kozmeticku
+        makeUpArtist.setWorking(false);
+        isSomeMakeupArtistsFree = true;
+        Double workedTime = makeUpArtist.getWorkedTimeTogether();
+        makeUpArtist.setWorkedTimeTogether(workedTime + currentTime - event.getMakeupStartTime());
+
+        //update pre customera
+        customer.setMakeup(false);
+        //TODO
+        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
     }
 
     public void hairstyleEndProcess(HairstyleEnd event){
         Customer customer = event.getCustomer();
+        Hairstylist hairstylist = event.getChosenHairstylist();
+        //temp
         customer.setCurrentPosition(CurrentPosition.PAYING);
+
+        //update pre kozmeticku
+        hairstylist.setWorking(false);
+        isSomeHairstylistFree = true;
+        Double workedTime = hairstylist.getWorkedTimeTogether();
+        hairstylist.setWorkedTimeTogether(workedTime + currentTime - event.getHairstylingStartTime());
+        //update pre customera
+        customer.setHairstyle(false);
+        //ak ma zakaznik zaujem aj o licenie(popripade potom aj cistenie pleti) tak pokusenie o vytvorenie jedneho z tychto eventov
+        if (customer.isCleaning() || customer.isMakeup()){
+            //ma zaujem o cistenie pleti alebo licenie
+            if (!isSomeMakeupArtistsFree){
+                //ak nie je volna kozmeticka tak sa musi postavit do radu
+                //update statistik kvoli zmene poctu ludi v rade
+                if (waitTimesInMakeupQueue.size() < makeupWaitingQueue.size()+1){
+                    waitTimesInMakeupQueue.add(currentTime - numberOfCustomersInMakeupQueueChangedTime);
+                }else {
+                    Double currentValue = waitTimesInMakeupQueue.get(makeupWaitingQueue.size());
+                    waitTimesInMakeupQueue.set(
+                            makeupWaitingQueue.size(),
+                            currentValue+(currentTime-numberOfCustomersInMakeupQueueChangedTime));
+                }
+                numberOfCustomersInMakeupQueueChangedTime = currentTime;
+                //pridanie do radu
+                customer.setCurrentPosition(CurrentPosition.IN_QUEUE_FOR_MAKEUP);
+                makeupWaitingQueue.add(customer);
+            }else {
+                //nejaka kozmeticka je volna tak sa moze planovat zacatie udalosti
+                PriorityQueue<MakeUpArtist> availableMakeupArtists = new PriorityQueue<>();
+                for (int i = 0; i < listOfMakeupArtists.size(); i++){
+                    MakeUpArtist m = listOfMakeupArtists.get(i);
+                    if (!m.isWorking()){
+                        availableMakeupArtists.add(m);
+                    }
+                }
+                if (availableMakeupArtists.size() == 1){
+                    isSomeMakeupArtistsFree = false;
+                }
+                MakeUpArtist chosenMakeupArtist = availableMakeupArtists.poll();
+                chosenMakeupArtist.setWorking(true);
+                if (customer.isCleaning()){
+                    //chce aj cistenie a to sa vykonva pred licenim
+                    calendar.add(
+                            new SkinCleaningBeginning(currentTime,this,customer,chosenMakeupArtist)
+                    );
+                }else {
+                    //chce iba licenie bez cistenia
+                    calendar.add(
+                            new MakeupBeginning(currentTime, this, customer, chosenMakeupArtist)
+                    );
+                }
+            }
+        }else {
+            //nema zaujem o dalsie sluzby tak pojde platit
+            customer.setPaying(true);
+            if (isSomeReceptionistFree){
+                //vytvaranie eventu pre zaciatok platby
+                PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+                for (int i = 0; i < listOfReceptionists.size(); i++){
+                    Receptionist r = listOfReceptionists.get(i);
+                    if (!r.isWorking()){
+                        availableReceptionists.add(r);
+                    }
+                }
+                if (availableReceptionists.size() == 1){
+                    isSomeReceptionistFree = false;
+                }
+                Receptionist chosenReceptionist = availableReceptionists.poll();
+                chosenReceptionist.setWorking(true);
+                calendar.add(
+                        new PaymentBeginning(currentTime, this, customer, chosenReceptionist)
+                );
+            }else {
+                //postavenie do priroitneho frontu pred recepciou(mal by byt upradnostneny)
+                //priradenie hodnot pre zistovanie statistik o dlzke radu
+                if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                    waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+                }else {
+                    Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                    waitTimesInReceptionQueue.set(
+                            receptionWaitingQueue.size(),
+                            currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+                }
+                numberOfCustomersInReceptionQueueChangedTime = currentTime;
+                //postavenie do radu
+                customer.setCurrentPosition(CurrentPosition.IN_QUEUE_FOR_PAY);
+                receptionWaitingQueue.add(customer);
+            }
+        }
+
+        //ak niekto caka v rade pre uces tak si ho zoberie uvolnena kozmeticka
+        if (!hairstyleWaitingQueue.isEmpty()){
+            //updatnute cakacie hodnoty pretoze dlzka radu sa bude menit
+            if (waitTimesInHairstyleQueue.size() < hairstyleWaitingQueue.size()+1){
+                waitTimesInHairstyleQueue.add(currentTime - numberOfCustomersInHairstyleQueueChangedTime);
+            }else {
+                Double currentValue = waitTimesInHairstyleQueue.get(hairstyleWaitingQueue.size());
+                waitTimesInHairstyleQueue.set(
+                        hairstyleWaitingQueue.size(),
+                        currentValue+(currentTime-numberOfCustomersInHairstyleQueueChangedTime));
+            }
+            numberOfCustomersInHairstyleQueueChangedTime = currentTime;
+
+            Customer c = hairstyleWaitingQueue.poll();
+            PriorityQueue<Hairstylist> availableHairstylists = new PriorityQueue<>();
+            for (int i = 0; i < listOfHairStylists.size(); i++){
+                Hairstylist h = listOfHairStylists.get(i);
+                if (!h.isWorking()) {
+                    availableHairstylists.add(h);
+                }
+            }
+            if (availableHairstylists.size() == 1){
+                isSomeHairstylistFree = false;
+            }
+            Hairstylist chosenHairstylist = availableHairstylists.poll();
+            chosenHairstylist.setWorking(true);
+            calendar.add(
+                    new HairstyleBeginning(currentTime, this, c, chosenHairstylist)
+            );
+        }
+
+        //TODO tu neviem presne ako by mal postupovat keby mal v rade nejakeho co chce platit
+        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
+        if (((makeupWaitingQueue.size() + hairstyleWaitingQueue.size()) == 10)
+                && !receptionWaitingQueue.isEmpty()
+                && isSomeReceptionistFree){
+            if (!receptionWaitingQueue.peek().isPaying()){
+                //ak chce vytvarat objednavku tak uz moze lebo klesol pocet pod 11
+                if ((makeupWaitingQueue.size() + hairstyleWaitingQueue.size()) == 10){
+
+                }
+            }
+        }
     }
 
     public void testing(TestingEvent event){
@@ -569,9 +726,20 @@ public class BeautySalonSimulator extends EventSimulator{
         for (int i = 0; i < listOfCustomersInSystem.size(); i++){
             Customer c = listOfCustomersInSystem.get(i);
             if (c.getArriveTime() < currentTime){
+                String wantedServices = "";
+                if (c.isHairstyle()){
+                    wantedServices += "Uces ";
+                }
+                if (c.isCleaning()){
+                    wantedServices += "Cistenie pleti ";
+                }
+                if (c.isMakeup()){
+                    wantedServices += "Licenie";
+                }
                 result += "\n  Zakaznik: \n    Cas prichodu: " + convertTimeOfSystem(c.getArriveTime()) +
                         "\n    Aktualne miesto v systeme: " +
-                        convertCurrentPosition(c.getCurrentPosition());
+                        convertCurrentPosition(c.getCurrentPosition()) +
+                        "\n    Momentalne ma zaujem este o sluzby: " + wantedServices;
             }
         }
         return result;
