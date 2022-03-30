@@ -1,5 +1,6 @@
 package Simulation.Events;
 
+import Simulation.BeautySalonSimulator;
 import Simulation.Participants.Customer;
 import Simulation.Participants.MakeUpArtist;
 import Simulation.Simulator;
@@ -22,7 +23,8 @@ public class SkinCleaningEnd extends Event{
 
     @Override
     public void execute() {
-
+        BeautySalonSimulator simulator = (BeautySalonSimulator) simulationCore;
+        simulator.skinCleaningEndProcess(this);
     }
 
     public double getCleaningStartTime() {

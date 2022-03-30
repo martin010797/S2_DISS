@@ -1,6 +1,9 @@
 package Simulation;
 
+import Generators.EmpGen;
+import Generators.EmpiricalObject;
 import Generators.ExpGen;
+import Generators.Triangular;
 import Simulation.Events.*;
 import Simulation.Participants.*;
 
@@ -13,7 +16,15 @@ public class BeautySalonSimulator extends EventSimulator{
     private ExpGen arrivalGenerator;
     private Random lengthOfOrderingGenerator;
     private Random hairstyleMakeupServicesGenerator;
-    private Random cleaningGenerator;
+    private Random cleaningChoiceGenerator;
+    private Triangular cleaningTriangularGenerator;
+    private Random makeupTypeGenerator;
+    private Random simpleMakeupGenerator;
+    private Random complicatedMakeupGenerator;
+    private Random hairstyleTypeGenerator;
+    private Random simpleHairstyleGenerator;
+    private EmpGen complicatedHairstyleGenerator;
+    private EmpGen weddingHairstyleGenerator;
 
     private boolean maxSpeed;
     private int deltaT;
@@ -84,7 +95,25 @@ public class BeautySalonSimulator extends EventSimulator{
         arrivalGenerator = new ExpGen(exponentialGeneratorBase, 3600/8);
         lengthOfOrderingGenerator = new Random(seed.nextInt());
         hairstyleMakeupServicesGenerator = new Random(seed.nextInt());
-        cleaningGenerator = new Random(seed.nextInt());
+
+        cleaningChoiceGenerator = new Random(seed.nextInt());
+        cleaningTriangularGenerator = new Triangular(seed.nextInt(),360,900,540);
+
+        makeupTypeGenerator = new Random(seed.nextInt());
+        simpleMakeupGenerator = new Random(seed.nextInt());
+        complicatedMakeupGenerator = new Random(seed.nextInt());
+
+        hairstyleTypeGenerator = new Random(seed.nextInt());
+        simpleHairstyleGenerator = new Random(seed.nextInt());
+        ArrayList<EmpiricalObject> listOfComplicatedHairstylesDistributions = new ArrayList<>();
+        listOfComplicatedHairstylesDistributions.add(new EmpiricalObject(30,60,0.4));
+        listOfComplicatedHairstylesDistributions.add(new EmpiricalObject(61,120,0.6));
+        complicatedHairstyleGenerator = new EmpGen(listOfComplicatedHairstylesDistributions, seed.nextInt());
+        ArrayList<EmpiricalObject> listOfWeddingHairstylesDistributions= new ArrayList<>();
+        listOfWeddingHairstylesDistributions.add(new EmpiricalObject(50,60,0.2));
+        listOfWeddingHairstylesDistributions.add(new EmpiricalObject(61,100,0.3));
+        listOfWeddingHairstylesDistributions.add(new EmpiricalObject(101,150,0.5));
+        weddingHairstyleGenerator = new EmpGen(listOfWeddingHairstylesDistributions,seed.nextInt());
 
         numberOfArrivedCustomers = 0;
         numberOfServedCustomers = 0;
@@ -244,7 +273,7 @@ public class BeautySalonSimulator extends EventSimulator{
                 customer.setHairstyle(true);
                 customer.setMakeup(true);
             }
-            double cleaningGeneratedValue = cleaningGenerator.nextDouble();
+            double cleaningGeneratedValue = cleaningChoiceGenerator.nextDouble();
             //ak chcu aj cistenie pleti
             if (cleaningGeneratedValue < 0.35){
                 customer.setCleaning(true);
@@ -384,29 +413,107 @@ public class BeautySalonSimulator extends EventSimulator{
     public void hairstyleBeginningProcess(HairstyleBeginning event){
         Customer customer = event.getCustomer();
         customer.setCurrentPosition(CurrentPosition.HAIR_STYLING);
+        double durationOfHairstyle;
+        /*
+        calendar.add(new WritingOrderEnd(
+                currentTime + lengthOfOrdering,
+                this,
+                customer,
+                event.getTime(),
+                event.getChosenReceptionist()));*/
+        double choice = hairstyleTypeGenerator.nextDouble();
+        if (choice < 0.4){
+            //jednoduchy uces
+            durationOfHairstyle = simpleHairstyleGenerator.nextInt(10,30+1)*60;
+        }else if(choice < 0.8){
+            //zlozity uces
+            try {
+                durationOfHairstyle = complicatedHairstyleGenerator.nextValue()*60;
+            }catch (Exception e){
+                e.printStackTrace();
+                durationOfHairstyle = 100000000;
+            }
+        }else {
+            //svadobny uces
+            try {
+                durationOfHairstyle = weddingHairstyleGenerator.nextValue()*60;
+            }catch (Exception e){
+                e.printStackTrace();
+                durationOfHairstyle = 100000000;
+            }
+        }
+        calendar.add(
+                new HairstyleEnd(
+                        currentTime+durationOfHairstyle,
+                        this,
+                        customer,
+                        event.getTime(),
+                        event.getChosenHairstylist()
+                )
+        );
+        lastProcessedEvent = event;
         //TODO
-
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
         //toto bude nakoniec v ende udalosti(pre vsetky tri sluzby) kde bude planovat novu sluzbu(teda sa uvolni miesot v rade)
         //naplanovanie koncu
-        lastProcessedEvent = event;
     }
     public void makeupBeginningProcess(MakeupBeginning event){
         Customer customer = event.getCustomer();
         customer.setCurrentPosition(CurrentPosition.MAKE_UP);
+        double choice = makeupTypeGenerator.nextDouble();
+        double lengthOfMakeup;
+        if (choice < 0.3){
+            //jednoduche licenie
+            lengthOfMakeup = simpleMakeupGenerator.nextInt(10,25+1)*60;
+        }else {
+            //zlozite
+            lengthOfMakeup = complicatedMakeupGenerator.nextInt(20,100+1)*60;
+        }
+        calendar.add(
+                new MakeupEnd(
+                        currentTime+lengthOfMakeup,
+                        this,
+                        customer,
+                        event.getTime(),
+                        event.getChosenMakeupArtist())
+        );
+        lastProcessedEvent = event;
         //TODO
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
 
         //naplanovanie koncu
-        lastProcessedEvent = event;
     }
     public void skinCleaningBeginningProcess(SkinCleaningBeginning event){
         Customer customer = event.getCustomer();
         customer.setCurrentPosition(CurrentPosition.CLEANING_SKIN);
+        double lengthOfCleaning = cleaningTriangularGenerator.nextValue();
+        calendar.add(
+                new SkinCleaningEnd(
+                        currentTime + lengthOfCleaning,
+                        this,
+                        customer,
+                        event.getTime(),
+                        event.getChosenMakeupArtist())
+        );
+        lastProcessedEvent = event;
         //TODO
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
         //naplanovanie koncu
-        lastProcessedEvent = event;
+    }
+
+    public void skinCleaningEndProcess(SkinCleaningEnd event){
+        Customer customer = event.getCustomer();
+        customer.setCurrentPosition(CurrentPosition.PAYING);
+    }
+
+    public void makeupEndProcess(MakeupEnd event){
+        Customer customer = event.getCustomer();
+        customer.setCurrentPosition(CurrentPosition.PAYING);
+    }
+
+    public void hairstyleEndProcess(HairstyleEnd event){
+        Customer customer = event.getCustomer();
+        customer.setCurrentPosition(CurrentPosition.PAYING);
     }
 
     public void testing(TestingEvent event){
