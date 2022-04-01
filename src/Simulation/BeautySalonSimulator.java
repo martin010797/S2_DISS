@@ -505,14 +505,86 @@ public class BeautySalonSimulator extends EventSimulator{
 
         //update pre kozmeticku
         makeUpArtist.setWorking(false);
-        //TODO na toto nastavovanie pozor aby som potom nenastavil v podstate predbehnutie ze som dal ze teraz sa jedna uvolnila
         isSomeMakeupArtistsFree = true;
         Double workedTime = makeUpArtist.getWorkedTimeTogether();
         makeUpArtist.setWorkedTimeTogether(workedTime + currentTime - event.getCleaningStartTime());
         //update pre customera
         customer.setCleaning(false);
-        //TODO
-        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
+
+        //naplanovanie licenia alebo cistenia pleti pre dalsieho zakaznika z radu(podla toho kto je na rade)
+        if (!makeupWaitingQueue.isEmpty()){
+            //ak niekto caka v rade na licenie/cistenie pleti tak si ho priradi uvolnena kozmeticka
+            //update statistik kvoli zmene poctu ludi v rade
+            if (waitTimesInMakeupQueue.size() < makeupWaitingQueue.size()+1){
+                waitTimesInMakeupQueue.add(currentTime - numberOfCustomersInMakeupQueueChangedTime);
+            }else {
+                Double currentValue = waitTimesInMakeupQueue.get(makeupWaitingQueue.size());
+                waitTimesInMakeupQueue.set(
+                        makeupWaitingQueue.size(),
+                        currentValue+(currentTime-numberOfCustomersInMakeupQueueChangedTime));
+            }
+            numberOfCustomersInMakeupQueueChangedTime = currentTime;
+
+            Customer c = makeupWaitingQueue.poll();
+            PriorityQueue<MakeUpArtist> availableMakeupArtists = new PriorityQueue<>();
+            for (int i = 0; i < listOfMakeupArtists.size(); i++){
+                MakeUpArtist m = listOfMakeupArtists.get(i);
+                if (!m.isWorking()){
+                    availableMakeupArtists.add(m);
+                }
+            }
+            if (availableMakeupArtists.size() == 1){
+                isSomeMakeupArtistsFree = false;
+            }
+            MakeUpArtist chosenMakeupArtist = availableMakeupArtists.poll();
+            chosenMakeupArtist.setWorking(true);
+            if (c.isCleaning()){
+                //chce aj cistenie a to sa vykonva pred licenim
+                calendar.add(
+                        new SkinCleaningBeginning(currentTime,this,c,chosenMakeupArtist)
+                );
+            }else {
+                //chce iba licenie bez cistenia
+                calendar.add(
+                        new MakeupBeginning(currentTime, this, c, chosenMakeupArtist)
+                );
+            }
+        }
+        //naplanovanie licenia pre tohto zakaznika(ak je dostupna kozmeticka)/postavenie do radu
+        if (!isSomeMakeupArtistsFree){
+            //musi sa postavit do radu pred licenim
+            //update statistik kvoli zmene poctu ludi v rade
+            if (waitTimesInMakeupQueue.size() < makeupWaitingQueue.size()+1){
+                waitTimesInMakeupQueue.add(currentTime - numberOfCustomersInMakeupQueueChangedTime);
+            }else {
+                Double currentValue = waitTimesInMakeupQueue.get(makeupWaitingQueue.size());
+                waitTimesInMakeupQueue.set(
+                        makeupWaitingQueue.size(),
+                        currentValue+(currentTime-numberOfCustomersInMakeupQueueChangedTime));
+            }
+            numberOfCustomersInMakeupQueueChangedTime = currentTime;
+            //pridanie do radu
+            customer.setCurrentPosition(CurrentPosition.IN_QUEUE_FOR_MAKEUP);
+            makeupWaitingQueue.add(customer);
+        }else {
+            //moze sa naplanovat udalost pre licenie pretoze je volna kozmeticka
+            PriorityQueue<MakeUpArtist> availableMakeupArtists = new PriorityQueue<>();
+            for (int i = 0; i < listOfMakeupArtists.size(); i++){
+                MakeUpArtist m = listOfMakeupArtists.get(i);
+                if (!m.isWorking()){
+                    availableMakeupArtists.add(m);
+                }
+            }
+            if (availableMakeupArtists.size() == 1){
+                isSomeMakeupArtistsFree = false;
+            }
+            MakeUpArtist chosenMakeupArtist = availableMakeupArtists.poll();
+            chosenMakeupArtist.setWorking(true);
+            calendar.add(
+                    new MakeupBeginning(currentTime, this, customer, chosenMakeupArtist)
+            );
+        }
+        lastProcessedEvent = event;
     }
 
     public void makeupEndProcess(MakeupEnd event){
@@ -529,8 +601,117 @@ public class BeautySalonSimulator extends EventSimulator{
 
         //update pre customera
         customer.setMakeup(false);
-        //TODO
+        //naplanovanie licenia alebo cistenia pleti(podla toho kto je na rade)
+        if (!makeupWaitingQueue.isEmpty()){
+            //ak niekto caka v rade na licenie/cistenie pleti tak si ho priradi uvolnena kozmeticka
+            //update statistik kvoli zmene poctu ludi v rade
+            if (waitTimesInMakeupQueue.size() < makeupWaitingQueue.size()+1){
+                waitTimesInMakeupQueue.add(currentTime - numberOfCustomersInMakeupQueueChangedTime);
+            }else {
+                Double currentValue = waitTimesInMakeupQueue.get(makeupWaitingQueue.size());
+                waitTimesInMakeupQueue.set(
+                        makeupWaitingQueue.size(),
+                        currentValue+(currentTime-numberOfCustomersInMakeupQueueChangedTime));
+            }
+            numberOfCustomersInMakeupQueueChangedTime = currentTime;
+
+            Customer c = makeupWaitingQueue.poll();
+            PriorityQueue<MakeUpArtist> availableMakeupArtists = new PriorityQueue<>();
+            for (int i = 0; i < listOfMakeupArtists.size(); i++){
+                MakeUpArtist m = listOfMakeupArtists.get(i);
+                if (!m.isWorking()){
+                    availableMakeupArtists.add(m);
+                }
+            }
+            if (availableMakeupArtists.size() == 1){
+                isSomeMakeupArtistsFree = false;
+            }
+            MakeUpArtist chosenMakeupArtist = availableMakeupArtists.poll();
+            chosenMakeupArtist.setWorking(true);
+            if (c.isCleaning()){
+                //chce aj cistenie a to sa vykonva pred licenim
+                calendar.add(
+                        new SkinCleaningBeginning(currentTime,this,c,chosenMakeupArtist)
+                );
+            }else {
+                //chce iba licenie bez cistenia
+                calendar.add(
+                        new MakeupBeginning(currentTime, this, c, chosenMakeupArtist)
+                );
+            }
+        }
+        //platba zakaznika kedze toto je posledna mozna sluzba
+        customer.setPaying(true);
+        if (isSomeReceptionistFree){
+            //vytvaranie eventu pre zaciatok platby
+            PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+            for (int i = 0; i < listOfReceptionists.size(); i++){
+                Receptionist r = listOfReceptionists.get(i);
+                if (!r.isWorking()){
+                    availableReceptionists.add(r);
+                }
+            }
+            if (availableReceptionists.size() == 1){
+                isSomeReceptionistFree = false;
+            }
+            Receptionist chosenReceptionist = availableReceptionists.poll();
+            chosenReceptionist.setWorking(true);
+            calendar.add(
+                    new PaymentBeginning(currentTime, this, customer, chosenReceptionist)
+            );
+        }else {
+            //postavenie do prioritneho frontu
+            //priradenie hodnot pre zistovanie statistik o dlzke radu
+            if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+            }else {
+                Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                waitTimesInReceptionQueue.set(
+                        receptionWaitingQueue.size(),
+                        currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+            }
+            numberOfCustomersInReceptionQueueChangedTime = currentTime;
+            //postavenie do radu
+            customer.setCurrentPosition(CurrentPosition.IN_QUEUE_FOR_PAY);
+            receptionWaitingQueue.add(customer);
+        }
+
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
+        if (((makeupWaitingQueue.size() + hairstyleWaitingQueue.size()) == 10)
+                && !receptionWaitingQueue.isEmpty()
+                && isSomeReceptionistFree){
+            if (!receptionWaitingQueue.peek().isPaying()){
+                //ak chce vytvarat objednavku tak uz moze lebo klesol pocet pod 11
+                //priradenie hodnot pre zistovanie statistik o dlzke radu pred recepciou
+                if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                    waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+                }else {
+                    Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                    waitTimesInReceptionQueue.set(
+                            receptionWaitingQueue.size(),
+                            currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+                }
+                numberOfCustomersInReceptionQueueChangedTime = currentTime;
+                Customer c = receptionWaitingQueue.poll();
+                //pridanie novej udalosti pre vybavovanie objednavky do kalendaru
+                PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+                for (int i = 0; i < listOfReceptionists.size(); i++){
+                    Receptionist r = listOfReceptionists.get(i);
+                    if (!r.isWorking()){
+                        availableReceptionists.add(r);
+                    }
+                }
+                if (availableReceptionists.size() == 1){
+                    isSomeReceptionistFree = false;
+                }
+                Receptionist chosenReceptionist = availableReceptionists.poll();
+                chosenReceptionist.setWorking(true);
+                calendar.add(
+                        new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
+                sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
+            }
+        }
+        lastProcessedEvent = event;
     }
 
     public void hairstyleEndProcess(HairstyleEnd event){
@@ -539,7 +720,8 @@ public class BeautySalonSimulator extends EventSimulator{
         //temp
         customer.setCurrentPosition(CurrentPosition.PAYING);
 
-        //update pre kozmeticku
+        int queuesSizeBeforeCreatingEvents = makeupWaitingQueue.size() + hairstyleWaitingQueue.size();
+        //update pre kadernicku
         hairstylist.setWorking(false);
         isSomeHairstylistFree = true;
         Double workedTime = hairstylist.getWorkedTimeTogether();
@@ -661,16 +843,42 @@ public class BeautySalonSimulator extends EventSimulator{
 
         //TODO tu neviem presne ako by mal postupovat keby mal v rade nejakeho co chce platit
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
-        if (((makeupWaitingQueue.size() + hairstyleWaitingQueue.size()) == 10)
+        if (((makeupWaitingQueue.size() + hairstyleWaitingQueue.size()) == 10
+                && queuesSizeBeforeCreatingEvents == 11)
                 && !receptionWaitingQueue.isEmpty()
                 && isSomeReceptionistFree){
             if (!receptionWaitingQueue.peek().isPaying()){
                 //ak chce vytvarat objednavku tak uz moze lebo klesol pocet pod 11
-                if ((makeupWaitingQueue.size() + hairstyleWaitingQueue.size()) == 10){
-
+                //priradenie hodnot pre zistovanie statistik o dlzke radu pred recepciou
+                if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                    waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+                }else {
+                    Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                    waitTimesInReceptionQueue.set(
+                            receptionWaitingQueue.size(),
+                            currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
                 }
+                numberOfCustomersInReceptionQueueChangedTime = currentTime;
+                Customer c = receptionWaitingQueue.poll();
+                //pridanie novej udalosti pre vybavovanie objednavky do kalendaru
+                PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+                for (int i = 0; i < listOfReceptionists.size(); i++){
+                    Receptionist r = listOfReceptionists.get(i);
+                    if (!r.isWorking()){
+                        availableReceptionists.add(r);
+                    }
+                }
+                if (availableReceptionists.size() == 1){
+                    isSomeReceptionistFree = false;
+                }
+                Receptionist chosenReceptionist = availableReceptionists.poll();
+                chosenReceptionist.setWorking(true);
+                calendar.add(
+                        new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
+                sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
             }
         }
+        lastProcessedEvent = event;
     }
 
     public void testing(TestingEvent event){
