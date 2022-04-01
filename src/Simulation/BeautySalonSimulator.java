@@ -25,6 +25,7 @@ public class BeautySalonSimulator extends EventSimulator{
     private Random simpleHairstyleGenerator;
     private EmpGen complicatedHairstyleGenerator;
     private EmpGen weddingHairstyleGenerator;
+    private Random paymentGenerator;
 
     private boolean maxSpeed;
     private int deltaT;
@@ -114,6 +115,7 @@ public class BeautySalonSimulator extends EventSimulator{
         listOfWeddingHairstylesDistributions.add(new EmpiricalObject(61,100,0.3));
         listOfWeddingHairstylesDistributions.add(new EmpiricalObject(101,150,0.5));
         weddingHairstyleGenerator = new EmpGen(listOfWeddingHairstylesDistributions,seed.nextInt());
+        paymentGenerator = new Random(seed.nextInt());
 
         numberOfArrivedCustomers = 0;
         numberOfServedCustomers = 0;
@@ -501,7 +503,7 @@ public class BeautySalonSimulator extends EventSimulator{
         Customer customer = event.getCustomer();
         MakeUpArtist makeUpArtist = event.getChosenMakeupArtist();
         //temp
-        customer.setCurrentPosition(CurrentPosition.PAYING);
+        //customer.setCurrentPosition(CurrentPosition.PAYING);
 
         //update pre kozmeticku
         makeUpArtist.setWorking(false);
@@ -591,7 +593,7 @@ public class BeautySalonSimulator extends EventSimulator{
         Customer customer = event.getCustomer();
         MakeUpArtist makeUpArtist = event.getChosenMakeupArtist();
         //temp
-        customer.setCurrentPosition(CurrentPosition.PAYING);
+        //customer.setCurrentPosition(CurrentPosition.PAYING);
 
         //update pre kozmeticku
         makeUpArtist.setWorking(false);
@@ -718,7 +720,7 @@ public class BeautySalonSimulator extends EventSimulator{
         Customer customer = event.getCustomer();
         Hairstylist hairstylist = event.getChosenHairstylist();
         //temp
-        customer.setCurrentPosition(CurrentPosition.PAYING);
+        //customer.setCurrentPosition(CurrentPosition.PAYING);
 
         int queuesSizeBeforeCreatingEvents = makeupWaitingQueue.size() + hairstyleWaitingQueue.size();
         //update pre kadernicku
@@ -878,6 +880,104 @@ public class BeautySalonSimulator extends EventSimulator{
                 sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
             }
         }
+        lastProcessedEvent = event;
+    }
+
+    public void paymentBeginningProcess(PaymentBeginning event){
+        Customer customer = event.getCustomer();
+        customer.setCurrentPosition(CurrentPosition.PAYING);
+        double lengthOfPayment = 180 + paymentGenerator.nextDouble(-50,50);
+        calendar.add(
+                new PaymentEnd(currentTime + lengthOfPayment,
+                        this,
+                        customer,
+                        event.getTime(),
+                        event.getChosenReceptionist())
+        );
+        lastProcessedEvent = event;
+    }
+
+    public void paymentEndProcess(PaymentEnd event){
+        Customer customer = event.getCustomer();
+        Receptionist receptionist = event.getChosenReceptionist();
+        listOfCustomersInSystem.remove(customer);
+        //update pre recepcnu
+        receptionist.setWorking(false);
+        isSomeReceptionistFree = true;
+        Double workedTime = receptionist.getWorkedTimeTogether();
+        receptionist.setWorkedTimeTogether(workedTime + currentTime - event.getWritingOrderStartTime());
+
+        //TODO
+        //naplanovanie novej platby/zapisu objednavky ALE ak to je vytvaranie objednavky tak overit ci je velkost
+        //radov dokpy pod 11
+        if (!receptionWaitingQueue.isEmpty()){
+            if (receptionWaitingQueue.peek().isPaying()){
+                //ak je platiaci zakaznik tak sa vytvori zaciatok platby
+                Customer c = receptionWaitingQueue.poll();
+                //priradenie hodnot pre zistovanie statistik o dlzke radu pred recepciou
+                if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                    waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+                }else {
+                    Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                    waitTimesInReceptionQueue.set(
+                            receptionWaitingQueue.size(),
+                            currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+                }
+                numberOfCustomersInReceptionQueueChangedTime = currentTime;
+
+                PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+                for (int i = 0; i < listOfReceptionists.size(); i++){
+                    Receptionist r = listOfReceptionists.get(i);
+                    if (!r.isWorking()){
+                        availableReceptionists.add(r);
+                    }
+                }
+                if (availableReceptionists.size() == 1){
+                    isSomeReceptionistFree = false;
+                }
+                Receptionist chosenReceptionist = availableReceptionists.poll();
+                chosenReceptionist.setWorking(true);
+                calendar.add(
+                        new PaymentBeginning(currentTime,this, c, chosenReceptionist));
+                //TODO toto aj inam?
+                sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
+            }else {
+                //ak nie je platiaci(chce spisat objednavku) tak overi ci je kapacita radov mensia ako 11
+                if ((hairstyleWaitingQueue.size() + makeupWaitingQueue.size()) <= 10){
+                    //moze sa vytvorit udalost pre zaciatok zapisu objednavky
+                    //priradenie hodnot pre zistovanie statistik o dlzke radu pred recepciou
+                    if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                        waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+                    }else {
+                        Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                        waitTimesInReceptionQueue.set(
+                                receptionWaitingQueue.size(),
+                                currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+                    }
+                    numberOfCustomersInReceptionQueueChangedTime = currentTime;
+
+                    Customer c = receptionWaitingQueue.poll();
+                    //pridanie novej udalosti pre vybavovanie objednavky do kalendaru
+                    PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+                    for (int i = 0; i < listOfReceptionists.size(); i++){
+                        Receptionist r = listOfReceptionists.get(i);
+                        if (!r.isWorking()){
+                            availableReceptionists.add(r);
+                        }
+                    }
+                    if (availableReceptionists.size() == 1){
+                        isSomeReceptionistFree = false;
+                    }
+                    Receptionist chosenReceptionist = availableReceptionists.poll();
+                    chosenReceptionist.setWorking(true);
+                    calendar.add(
+                            new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
+                    //TODO toto aj inam?
+                    sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
+                }
+            }
+        }
+        numberOfServedCustomers++;
         lastProcessedEvent = event;
     }
 

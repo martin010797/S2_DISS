@@ -1,5 +1,6 @@
 package Simulation.Events;
 
+import Simulation.BeautySalonSimulator;
 import Simulation.Participants.Customer;
 import Simulation.Participants.Receptionist;
 import Simulation.Simulator;
@@ -16,7 +17,8 @@ public class PaymentBeginning extends Event{
 
     @Override
     public void execute() {
-
+        BeautySalonSimulator simulator = (BeautySalonSimulator) simulationCore;
+        simulator.paymentBeginningProcess(this);
     }
 
     public Receptionist getChosenReceptionist() {
