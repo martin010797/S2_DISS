@@ -55,6 +55,7 @@ public class BeautySalonGui implements ISimDelegate{
     private BeautySalonSimulator simulator;
     private String lastStatesValues;
     private String lastCalendar;
+    private String lastStats;
 
     public BeautySalonGui() {
         frame = new JFrame("Beauty salon");
@@ -190,6 +191,12 @@ public class BeautySalonGui implements ISimDelegate{
             Event e = sim.getLastProcessedEvent();
             lastProcessedEventLabel.setText(sim.convertTimeOfSystem(e.getTime()) + "  " + e.getNameOfTheEvent());
         }
+
+        String stats = sim.getStats();
+        if (!stats.equals(lastStats)){
+            statisticsTextPane.setText(stats);
+            lastStats = statisticsTextPane.getText();
+        }
     }
 
     public void createDatasets(){
@@ -228,8 +235,9 @@ public class BeautySalonGui implements ISimDelegate{
                 "\n  Rad pred licenim: -\n  Rad pred platenim: - \nPocet prichodov zakaznikov: -" +
                 "\nPocet obsluzenych zakaznikov: -\nStavy personalu: - \nStavy zakaznikov v systeme: -";
         statesOfSystemTextPane.setText(text);
-        statisticsTextPane.setText("Statistiky: -");
+        statisticsTextPane.setText("Statistiky");
         lastStatesValues = statesOfSystemTextPane.getText();
         lastCalendar = calendarTextPane.getText();
+        lastStats = statisticsTextPane.getText();
     }
 }

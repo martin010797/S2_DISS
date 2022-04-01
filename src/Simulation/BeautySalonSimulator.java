@@ -40,7 +40,6 @@ public class BeautySalonSimulator extends EventSimulator{
     private PriorityQueue<Customer> receptionWaitingQueue;
     private Queue<Customer> hairstyleWaitingQueue;
     private Queue<Customer> makeupWaitingQueue;
-    private Queue<Customer> paymentWaitingQueue;
 
     private ArrayList<Double> waitTimesInReceptionQueue;
     private ArrayList<Double> waitTimesInHairstyleQueue;
@@ -49,12 +48,14 @@ public class BeautySalonSimulator extends EventSimulator{
     private double numberOfCustomersInReceptionQueueChangedTime;
     private double numberOfCustomersInHairstyleQueueChangedTime;
     private double numberOfCustomersInMakeupQueueChangedTime;
-    private double numberOfCustomersInPaymentQueueChangedTime;
     private double sumWaitTimeInReceptionQueue;
     private double sumWaitTimeInHairstyleQueue;
     private double sumWaitTimeInMakeupQueue;
-    private double sumWaitTimeInPaymentQueue;
 
+    private double customerSumTimesInSystem;
+    private double sumOfWaitTimeForOrder;
+    private int numberOfStartedOrders;
+    private double averageLengthOfReceptionQueue;
 
     private List<Customer> listOfCustomersInSystem;
     private List<Hairstylist> listOfHairStylists;
@@ -72,7 +73,6 @@ public class BeautySalonSimulator extends EventSimulator{
         receptionWaitingQueue = new PriorityQueue<>();
         hairstyleWaitingQueue = new LinkedList<>();
         makeupWaitingQueue = new LinkedList<>();
-        paymentWaitingQueue = new LinkedList<>();
 
         waitTimesInHairstyleQueue = new ArrayList<>();
         waitTimesInMakeupQueue = new ArrayList<>();
@@ -126,7 +126,6 @@ public class BeautySalonSimulator extends EventSimulator{
         receptionWaitingQueue.clear();
         hairstyleWaitingQueue.clear();
         makeupWaitingQueue.clear();
-        paymentWaitingQueue.clear();
         waitTimesInHairstyleQueue.clear();
         waitTimesInMakeupQueue.clear();
         waitTimesInPaymentQueue.clear();
@@ -134,11 +133,13 @@ public class BeautySalonSimulator extends EventSimulator{
         numberOfCustomersInReceptionQueueChangedTime = 0;
         numberOfCustomersInHairstyleQueueChangedTime = 0;
         numberOfCustomersInMakeupQueueChangedTime = 0;
-        numberOfCustomersInPaymentQueueChangedTime = 0;
         sumWaitTimeInHairstyleQueue = 0;
         sumWaitTimeInMakeupQueue = 0;
-        sumWaitTimeInPaymentQueue = 0;
         sumWaitTimeInReceptionQueue = 0;
+
+        customerSumTimesInSystem = 0;
+        sumOfWaitTimeForOrder = 0;
+        numberOfStartedOrders = 0;
 
         if (numberOfHairstylists > 0){
             isSomeHairstylistFree = true;
@@ -252,6 +253,8 @@ public class BeautySalonSimulator extends EventSimulator{
         //planovanie ukoncenia objednavky
         Customer customer = event.getCustomer();
         customer.setCurrentPosition(CurrentPosition.ORDERING);
+        sumOfWaitTimeForOrder += currentTime - customer.getArriveTime();
+        numberOfStartedOrders++;
         double lengthOfOrdering = 200 + lengthOfOrderingGenerator.nextDouble(-120,120);
         calendar.add(new WritingOrderEnd(
                 currentTime + lengthOfOrdering,
@@ -900,6 +903,8 @@ public class BeautySalonSimulator extends EventSimulator{
     public void paymentEndProcess(PaymentEnd event){
         Customer customer = event.getCustomer();
         Receptionist receptionist = event.getChosenReceptionist();
+        customerSumTimesInSystem += currentTime - customer.getArriveTime();
+        numberOfServedCustomers++;
         listOfCustomersInSystem.remove(customer);
         //update pre recepcnu
         receptionist.setWorking(false);
@@ -977,7 +982,6 @@ public class BeautySalonSimulator extends EventSimulator{
                 }
             }
         }
-        numberOfServedCustomers++;
         lastProcessedEvent = event;
     }
 
@@ -990,7 +994,7 @@ public class BeautySalonSimulator extends EventSimulator{
         String result = "";
         result += "Pocet ludi v radoch: -\n  Rad pred recepciou: " + receptionWaitingQueue.size() + " \n  " +
                 "Rad pred upravou ucesu: " + hairstyleWaitingQueue.size() + " \n  Rad pred licenim: "
-                + makeupWaitingQueue.size() + "\n  Rad pred platenim: "+ paymentWaitingQueue.size()
+                + makeupWaitingQueue.size()
                 + "\nPocet prichodov zakaznikov: " + numberOfArrivedCustomers +
                 "\nPocet obsluzenych zakaznikov: " + numberOfServedCustomers +" " +
                 "\nStavy personalu: ";
@@ -1123,9 +1127,41 @@ public class BeautySalonSimulator extends EventSimulator{
         int size = cal.size();
         for (int i = 0; i < size; i++){
             Event e = cal.poll();
-            //if (!(e instanceof SystemEvent))
-            result += convertTimeOfSystem(e.getTime())+ "\t" + e.getNameOfTheEvent() + "\n";
+            if (!(e instanceof SystemEvent))
+                result += convertTimeOfSystem(e.getTime())+ "\t" + e.getNameOfTheEvent() + "\n";
         }
+        return result;
+    }
+
+    public String getStats(){
+        String result = "Priemerny cas zakaznika v systeme: "
+                + getTotalTimeFromSeconds(customerSumTimesInSystem/numberOfServedCustomers)
+                + "\n  " + numberOfServedCustomers + " obsluzenych zakaznikov";
+        double avgWaitTime = 0;
+        if (numberOfStartedOrders != 0){
+            avgWaitTime = sumOfWaitTimeForOrder/numberOfStartedOrders;
+        }
+        result += "\nPriemerny cas cakania v rade na zadanie objednavky: "
+                + getTotalTimeFromSeconds(avgWaitTime) + "\n  " + numberOfStartedOrders + " zadanych objednavok";
+
+        //TODO
+        //Toto asi uplne vynechat pri max rychlosti
+        if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+            waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+        }else {
+            Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+            waitTimesInReceptionQueue.set(
+                    receptionWaitingQueue.size(),
+                    currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+        }
+        numberOfCustomersInReceptionQueueChangedTime = currentTime;
+        //
+        double receptionSum = 0;
+        for(int i = 0; i < waitTimesInReceptionQueue.size(); i++){
+            receptionSum += i * waitTimesInReceptionQueue.get(i);
+        }
+        averageLengthOfReceptionQueue = receptionSum/currentTime;
+        result += "\nPriemerny pocet v rade pred recepciou: " + Math.round(averageLengthOfReceptionQueue * 100.0) / 100.0;
         return result;
     }
 
