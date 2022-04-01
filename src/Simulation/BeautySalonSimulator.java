@@ -34,8 +34,11 @@ public class BeautySalonSimulator extends EventSimulator{
     private int numberOfMakeupArtists;
     private int numberOfHairstylists;
 
+    private boolean finished;
+
     private int numberOfArrivedCustomers;
     private int numberOfServedCustomers;
+    private int numberOfLeavingCustomers;
 
     private PriorityQueue<Customer> receptionWaitingQueue;
     private Queue<Customer> hairstyleWaitingQueue;
@@ -119,10 +122,12 @@ public class BeautySalonSimulator extends EventSimulator{
 
         numberOfArrivedCustomers = 0;
         numberOfServedCustomers = 0;
+        numberOfLeavingCustomers = 0;
     }
 
     @Override
     public void doBeforeReplications() {
+        finished = false;
         receptionWaitingQueue.clear();
         hairstyleWaitingQueue.clear();
         makeupWaitingQueue.clear();
@@ -159,6 +164,7 @@ public class BeautySalonSimulator extends EventSimulator{
         listOfCustomersInSystem.clear();
         numberOfArrivedCustomers = 0;
         numberOfServedCustomers = 0;
+        numberOfLeavingCustomers = 0;
         calendar.clear();
         lastProcessedEvent = null;
         currentTime = 0;
@@ -166,6 +172,7 @@ public class BeautySalonSimulator extends EventSimulator{
         double time = currentTime + arrivalGenerator.nextValue();
         Customer arrivedCustomer = new Customer(time);
         listOfCustomersInSystem.add(arrivedCustomer);
+        calendar.add(new EndOfTheShift(28800,this,null));
         calendar.add(new CustomerArrived(time, this, arrivedCustomer));
         //calendar.add(new TestingEvent(0,this, null));
         if (!maxSpeed){
@@ -242,10 +249,11 @@ public class BeautySalonSimulator extends EventSimulator{
         }
 
         double time = currentTime + arrivalGenerator.nextValue();
-        Customer arrivedCustomer = new Customer(time);
-        listOfCustomersInSystem.add(arrivedCustomer);
-
-        calendar.add(new CustomerArrived(time, this, arrivedCustomer));
+        if (time < 28800){
+            Customer arrivedCustomer = new Customer(time);
+            listOfCustomersInSystem.add(arrivedCustomer);
+            calendar.add(new CustomerArrived(time, this, arrivedCustomer));
+        }
         lastProcessedEvent = event;
     }
 
@@ -984,6 +992,20 @@ public class BeautySalonSimulator extends EventSimulator{
         }
         lastProcessedEvent = event;
     }
+    
+    public void closingProcess(){
+        Iterator itr = listOfCustomersInSystem.iterator();
+        int numberOfRemoved = 0;
+        while (itr.hasNext()) {
+            Customer c = (Customer)itr.next();
+            if (c.getCurrentPosition() == CurrentPosition.IN_QUEUE_FOR_ORDERING){
+                receptionWaitingQueue.remove(c);
+                itr.remove();
+                numberOfRemoved++;
+            }
+        }
+        numberOfLeavingCustomers = numberOfRemoved;
+    }
 
     public void testing(TestingEvent event){
         calendar.add(new TestingEvent(currentTime + 1,this, null));
@@ -996,8 +1018,8 @@ public class BeautySalonSimulator extends EventSimulator{
                 "Rad pred upravou ucesu: " + hairstyleWaitingQueue.size() + " \n  Rad pred licenim: "
                 + makeupWaitingQueue.size()
                 + "\nPocet prichodov zakaznikov: " + numberOfArrivedCustomers +
-                "\nPocet obsluzenych zakaznikov: " + numberOfServedCustomers +" " +
-                "\nStavy personalu: ";
+                "\nPocet obsluzenych zakaznikov: " + numberOfServedCustomers +" \nPocet odchodov po zatvaracke: "
+                + numberOfLeavingCustomers + "\nStavy personalu: ";
         result += "\n  Recepcia:";
         for (int i = 0; i < listOfReceptionists.size(); i++){
             Receptionist r = listOfReceptionists.get(i);
@@ -1172,7 +1194,11 @@ public class BeautySalonSimulator extends EventSimulator{
             e.printStackTrace();
         }
         double seconds = (double) deltaT/1000;
-        calendar.add(new SystemEvent(currentTime+seconds,this, null));
+        if(!calendar.isEmpty()){
+            calendar.add(new SystemEvent(currentTime+seconds,this, null));
+        }else {
+            finished = true;
+        }
     }
 
     public boolean isMaxSpeed() {
@@ -1209,5 +1235,9 @@ public class BeautySalonSimulator extends EventSimulator{
 
     public int getNumberOfServedCustomers() {
         return numberOfServedCustomers;
+    }
+
+    public boolean isFinished() {
+        return finished;
     }
 }

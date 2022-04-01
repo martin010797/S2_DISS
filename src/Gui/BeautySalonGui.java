@@ -172,6 +172,7 @@ public class BeautySalonGui implements ISimDelegate{
     @Override
     public void refresh(Simulator simulator) {
         BeautySalonSimulator sim = (BeautySalonSimulator) simulator;
+        //TODO vykresluj iba ak nie je zapnuta max rychlost
         simulationTimeLabel.setText(sim.getCurrentTime());
 
         String statesOfSystem = sim.getStatesOfSimulation();
@@ -196,6 +197,12 @@ public class BeautySalonGui implements ISimDelegate{
         if (!stats.equals(lastStats)){
             statisticsTextPane.setText(stats);
             lastStats = statisticsTextPane.getText();
+        }
+
+        if (sim.isFinished()){
+            fastSimulationRadioButton.setEnabled(true);
+            slowSimulationRadioButton.setEnabled(true);
+            chartOutputRadioButton.setEnabled(true);
         }
     }
 
