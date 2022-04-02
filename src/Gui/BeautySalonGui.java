@@ -242,10 +242,10 @@ public class BeautySalonGui implements ISimDelegate{
             String currentText = statisticsTextPane.getText();
             String newData = currentText + "Cela doba: \n  Priemerna dlzka radu: " +
                     (Math.round(sim.getGlobalAverageLengthOfReceptionQueue() * 100.0) / 100.0) +
-                    "\n  Pocet kadeerniciek: " + sim.getNumberOfHairstylists() + "\n";
+                    "\n  Pocet kaderniciek: " + sim.getNumberOfHairstylists() + "\n";
             newData += "Do 17:00: \n  Priemerna dlzka radu: " +
                     (Math.round(sim.getGlobalUntil17AverageLengthOfReceptionQueue() * 100.0) / 100.0)+
-                    "\n  Pocet kadeerniciek: " + sim.getNumberOfHairstylists() + "\n";
+                    "\n  Pocet kaderniciek: " + sim.getNumberOfHairstylists() + "\n";
             statisticsTextPane.setText(newData);
             addToChart(sim.getGlobalAverageLengthOfReceptionQueue(),sim.getNumberOfHairstylists());
             addToChartUntil17(sim.getGlobalUntil17AverageLengthOfReceptionQueue(),sim.getNumberOfHairstylists());

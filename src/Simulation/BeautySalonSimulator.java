@@ -65,9 +65,11 @@ public class BeautySalonSimulator extends EventSimulator{
     //globalne statistiky
     private double globalSumAvgWaitTimeForOrder;
     private double globalSumAvgTimeInSystem;
+    private double globalSumAvgTimeInSystemPower;
     private double globalSumAvgLengthOfReceptionQueue;
     //do 17:00
     private double globalUntil17SumAvgTimeInSystem;
+    private double globalUntil17SumAvgTimeInSystemPower;
     private double globalUntil17SumAvgLengthOfReceptionQueue;
 
     private List<Customer> listOfCustomersInSystem;
@@ -78,6 +80,9 @@ public class BeautySalonSimulator extends EventSimulator{
     private boolean isSomeHairstylistFree;
     private boolean isSomeMakeupArtistsFree;
     private boolean isSomeReceptionistFree;
+
+    private double standardDeviation;
+    private double standardDeviationUntil17;
 
     public BeautySalonSimulator(int pNumberOfReplications, int lengthOfSimulation) {
         super(pNumberOfReplications);
@@ -143,8 +148,12 @@ public class BeautySalonSimulator extends EventSimulator{
         globalSumAvgLengthOfReceptionQueue = 0;
         globalSumAvgWaitTimeForOrder = 0;
         globalSumAvgTimeInSystem = 0;
+        globalSumAvgTimeInSystemPower = 0;
         globalUntil17SumAvgLengthOfReceptionQueue = 0;
         globalUntil17SumAvgTimeInSystem = 0;
+        globalUntil17SumAvgTimeInSystemPower = 0;
+        standardDeviation = 0;
+        standardDeviationUntil17 = 0;
         addPersonnel();
     }
 
@@ -241,9 +250,19 @@ public class BeautySalonSimulator extends EventSimulator{
         }
         globalSumAvgWaitTimeForOrder += avgWaitTime;
         globalSumAvgTimeInSystem += customerSumTimesInSystem/numberOfServedCustomers;
+        globalSumAvgTimeInSystemPower +=
+                (customerSumTimesInSystem/numberOfServedCustomers)*(customerSumTimesInSystem/numberOfServedCustomers);
 
         globalUntil17SumAvgTimeInSystem += customerSumTimesInSystemUntil17/numberOfServedCustomersUntil17;
+        globalUntil17SumAvgTimeInSystemPower += (customerSumTimesInSystemUntil17/numberOfServedCustomersUntil17)*
+                (customerSumTimesInSystemUntil17/numberOfServedCustomersUntil17);
         globalUntil17SumAvgLengthOfReceptionQueue += averageLengthOfReceptionQueueUntil17;
+        if (currentReplication != 0){
+            standardDeviation = Math.sqrt(((1.0/(currentReplication))*globalSumAvgTimeInSystemPower)
+                    -Math.pow(((1.0/(currentReplication))*globalSumAvgTimeInSystem),2));
+            standardDeviationUntil17 = Math.sqrt(((1.0/(currentReplication))*globalUntil17SumAvgTimeInSystemPower)
+                    -Math.pow(((1.0/(currentReplication))*globalUntil17SumAvgTimeInSystem),2));
+        }
         super.doAfterReplication();
         currentReplication++;
     }
@@ -1289,18 +1308,28 @@ public class BeautySalonSimulator extends EventSimulator{
     }
 
     public String getGlobalStatsAndForCurrentReplication(){
+        double confidenceInterval = (standardDeviation*1.645)/Math.sqrt(currentReplication+1);
+        double confidenceIntervalUntil17 = (standardDeviationUntil17*1.645)/Math.sqrt(currentReplication+1);
         //celkove statistiky
         String result = "Globalne statistiky: \n  Celkovo: \n    Cislo replikacie: " + currentReplication +
                 "\n    Priemerny cas zakaznika v systeme: " +
                 getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)) +
-                "\n    Priemerny pocet v rade pred recepciou: " +
+                "\n      Smerodajna odchylka: " + getTotalTimeFromSeconds(standardDeviation) +
+                "\n      Interval spolahlivosti: <" +
+                getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)-confidenceInterval) +
+                ", " + getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)+confidenceInterval) +
+                ">\n    Priemerny pocet v rade pred recepciou: " +
                 Math.round((globalSumAvgLengthOfReceptionQueue/(currentReplication+1)) * 100.0) / 100.0 +
                 "\n    Priemerny cas cakania v rade na zadanie objednavky: " +
                 getTotalTimeFromSeconds(globalSumAvgWaitTimeForOrder/(currentReplication+1));
         result += "\n  Iba do 17:00: \n    Cislo replikacie: " + currentReplication +
                 "\n    Priemerny cas zakaznika v systeme: " +
                 getTotalTimeFromSeconds(globalUntil17SumAvgTimeInSystem/(currentReplication+1)) +
-                "\n    Priemerny pocet v rade pred recepciou: " +
+                "\n      Smerodajna odchylka: " + getTotalTimeFromSeconds(standardDeviationUntil17) +
+                "\n      Interval spolahlivosti: <" +
+                getTotalTimeFromSeconds(globalUntil17SumAvgTimeInSystem/(currentReplication+1)-confidenceIntervalUntil17) +
+                ", " + getTotalTimeFromSeconds(globalUntil17SumAvgTimeInSystem/(currentReplication+1)+confidenceIntervalUntil17) +
+                ">\n    Priemerny pocet v rade pred recepciou: " +
                 Math.round((globalUntil17SumAvgLengthOfReceptionQueue/(currentReplication+1)) * 100.0) / 100.0 +
                 "\n    Priemerny cas cakania v rade na zadanie objednavky: " +
                 getTotalTimeFromSeconds(globalSumAvgWaitTimeForOrder/(currentReplication+1));
