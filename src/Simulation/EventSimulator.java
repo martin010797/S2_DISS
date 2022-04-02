@@ -55,6 +55,13 @@ public abstract class EventSimulator extends Simulator{
         }
     }
 
+    @Override
+    public void doAfterReplications() {
+        if (typeOfSimulation == TypeOfSimulation.MAX_WITH_CHART){
+            refreshGui();
+        }
+    }
+
     private void refreshGui(){
         for (ISimDelegate delegate : delegates) {
             delegate.refresh(this);

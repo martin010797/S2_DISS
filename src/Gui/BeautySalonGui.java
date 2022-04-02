@@ -102,10 +102,18 @@ public class BeautySalonGui implements ISimDelegate{
                 slowSimulationRadioButton.setEnabled(false);
                 chartOutputRadioButton.setEnabled(false);
                 isPausedLabel.setVisible(false);
-                simulator.setNumberOfHairstylists(Integer.parseInt(numberOfHairdressersTextField.getText()));
                 simulator.setNumberOfMakeupArtists(Integer.parseInt(numberOfMakeupArtistsTextField.getText()));
                 simulator.setNumberOfReceptionists(Integer.parseInt(numberOfReceptionistsTextField.getText()));
-                simulator.simulate();
+                if (simulator.getTypeOfSimulation() == TypeOfSimulation.MAX_WITH_CHART){
+                    simulator.setNumberOfReplications(Integer.parseInt(numberOfReplicationsTextField.getText()));
+                    statisticsTextPane.setText("");
+                    createDatasets();
+                    frame.setVisible(true);
+                    simulator.simulate(10);
+                }else {
+                    simulator.setNumberOfHairstylists(Integer.parseInt(numberOfHairdressersTextField.getText()));
+                    simulator.simulate();
+                }
             }
         });
         stopSimulationButton.addActionListener(new ActionListener() {
@@ -230,8 +238,17 @@ public class BeautySalonGui implements ISimDelegate{
             }
         }else {
             //aj s grafom
+            String currentText = statisticsTextPane.getText();
+            String newData = currentText + "Priemerna dlzka radu: " + sim.getGlobalAverageLengthOfReceptionQueue()+
+                    "\nPocet kadeerniciek: " + sim.getNumberOfHairstylists() + "\n";
+            statisticsTextPane.setText(newData);
+            addToChart(sim.getGlobalAverageLengthOfReceptionQueue(),sim.getNumberOfHairstylists());
+            if (sim.isFinished()){
+                fastSimulationRadioButton.setEnabled(true);
+                slowSimulationRadioButton.setEnabled(true);
+                chartOutputRadioButton.setEnabled(true);
+            }
         }
-
     }
 
     public void createDatasets(){
@@ -253,6 +270,11 @@ public class BeautySalonGui implements ISimDelegate{
         ChartPanel panel = new ChartPanel(lineChart);
         chartPanel.removeAll();
         chartPanel.add(panel, BorderLayout.CENTER);
+    }
+
+    public void addToChart(double averageNumberOfCustomersInReceptionQueue, int numberOfHairstylists){
+        lineChartXYSeries.add(numberOfHairstylists, averageNumberOfCustomersInReceptionQueue);
+        datasetLineChart.addSeries(lineChartXYSeries.getKey(), lineChartXYSeries.toArray());
     }
 
     private void setDeafultText(){

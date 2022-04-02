@@ -128,6 +128,9 @@ public class BeautySalonSimulator extends EventSimulator{
 
     @Override
     public void doBeforeReplications() {
+        if (typeOfSimulation == TypeOfSimulation.MAX_WITH_CHART){
+            numberOfHairstylists = currentRun+1;
+        }
         currentReplication = 0;
         finished = false;
         globalSumAvgLengthOfReceptionQueue = 0;
@@ -192,7 +195,10 @@ public class BeautySalonSimulator extends EventSimulator{
 
     @Override
     public void doAfterReplications() {
-
+        if (currentRun == 9){
+            finished = true;
+        }
+        super.doAfterReplications();
     }
 
     @Override
@@ -251,7 +257,7 @@ public class BeautySalonSimulator extends EventSimulator{
 
     @Override
     public void doAfterReplication() {
-        if (numberOfReplications == currentReplication+1){
+        if (numberOfReplications == currentReplication+1 && typeOfSimulation != TypeOfSimulation.MAX_WITH_CHART){
             finished = true;
         }
         //vypocet priemernej dlzky radu
@@ -474,7 +480,6 @@ public class BeautySalonSimulator extends EventSimulator{
             }
         }
 
-        //TU JE CHYBA/NEPLANUJE PLATENIE POKIAL JE NA RADE ZKAAZNIK KTORI PLATI
         //TODO prerobit tak aby queue bol priorityQueue a tuto teda aby overoval ci plati alebo nie(podla toho by
         // vytvoril event pre vybavovanie objednavky alebo pre platbu)
         //planovanie dalsieho vybavovania objednavky
@@ -1347,6 +1352,10 @@ public class BeautySalonSimulator extends EventSimulator{
         return result;
     }
 
+    public double getGlobalAverageLengthOfReceptionQueue(){
+        return globalSumAvgLengthOfReceptionQueue/(currentReplication+1);
+    }
+
     public void systemEventOccured(){
         try {
             Thread.sleep(sleepLength);
@@ -1379,6 +1388,10 @@ public class BeautySalonSimulator extends EventSimulator{
 
     public void setNumberOfHairstylists(int numberOfHairstylists) {
         this.numberOfHairstylists = numberOfHairstylists;
+    }
+
+    public int getNumberOfHairstylists() {
+        return numberOfHairstylists;
     }
 
     public int getNumberOfArrivedCustomers() {

@@ -6,6 +6,9 @@ public abstract class Simulator {
     protected boolean isPaused;
     protected int currentReplication;
 
+    //pre vykreslovanie grafov
+    protected int currentRun;
+
     public Simulator(int pNumberOfReplications) {
         numberOfReplications = pNumberOfReplications;
         isPaused = false;
@@ -40,6 +43,33 @@ public abstract class Simulator {
         thread.start();
     }
 
+    public void simulate(int numberOfTimes){
+        if (thread != null && thread.isAlive() && !isPaused){
+            return;
+        }
+        if (isPaused){
+            isPaused = false;
+            return;
+        }
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                currentRun = 0;
+                for (int j = 0; j < numberOfTimes; j++){
+                    doBeforeReplications();
+                    for(int i = 0; i < numberOfReplications; i++){
+                        doBeforeReplication();
+                        replication();
+                        doAfterReplication();
+                    }
+                    doAfterReplications();
+                    currentRun++;
+                }
+            }
+        });
+        thread.start();
+    }
+
     public int getNumberOfReplications() {
         return numberOfReplications;
     }
@@ -61,5 +91,9 @@ public abstract class Simulator {
             return true;
         }
         return false;
+    }
+
+    public boolean isPaused() {
+        return isPaused;
     }
 }
