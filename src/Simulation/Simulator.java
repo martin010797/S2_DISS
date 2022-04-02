@@ -4,6 +4,7 @@ public abstract class Simulator {
     protected int numberOfReplications;
     protected Thread thread;
     protected boolean isPaused;
+    protected int currentReplication;
 
     public Simulator(int pNumberOfReplications) {
         numberOfReplications = pNumberOfReplications;

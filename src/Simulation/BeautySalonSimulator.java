@@ -27,7 +27,6 @@ public class BeautySalonSimulator extends EventSimulator{
     private EmpGen weddingHairstyleGenerator;
     private Random paymentGenerator;
 
-    private boolean maxSpeed;
     private int deltaT;
     private int sleepLength;
     private int numberOfReceptionists;
@@ -60,6 +59,11 @@ public class BeautySalonSimulator extends EventSimulator{
     private int numberOfStartedOrders;
     private double averageLengthOfReceptionQueue;
 
+    //globalne statistiky
+    private double globalSumAvgWaitTimeForOrder;
+    private double globalSumAvgTimeInSystem;
+    private double globalSumAvgLengthOfReceptionQueue;
+
     private List<Customer> listOfCustomersInSystem;
     private List<Hairstylist> listOfHairStylists;
     private List<MakeUpArtist> listOfMakeupArtists;
@@ -81,9 +85,6 @@ public class BeautySalonSimulator extends EventSimulator{
         waitTimesInMakeupQueue = new ArrayList<>();
         waitTimesInPaymentQueue = new ArrayList<>();
         waitTimesInReceptionQueue = new ArrayList<>();
-
-        //TODO temp
-        maxSpeed = false;
 
         listOfCustomersInSystem = new ArrayList<>();
         listOfHairStylists = new ArrayList<>();
@@ -127,8 +128,12 @@ public class BeautySalonSimulator extends EventSimulator{
 
     @Override
     public void doBeforeReplications() {
+        currentReplication = 0;
         finished = false;
-        receptionWaitingQueue.clear();
+        globalSumAvgLengthOfReceptionQueue = 0;
+        globalSumAvgWaitTimeForOrder = 0;
+        globalSumAvgTimeInSystem = 0;
+        /*receptionWaitingQueue.clear();
         hairstyleWaitingQueue.clear();
         makeupWaitingQueue.clear();
         waitTimesInHairstyleQueue.clear();
@@ -141,6 +146,10 @@ public class BeautySalonSimulator extends EventSimulator{
         sumWaitTimeInHairstyleQueue = 0;
         sumWaitTimeInMakeupQueue = 0;
         sumWaitTimeInReceptionQueue = 0;
+
+        globalSumAvgLengthOfReceptionQueue = 0;
+        globalSumAvgWaitTimeForOrder = 0;
+        globalSumAvgTimeInSystem = 0;
 
         customerSumTimesInSystem = 0;
         sumOfWaitTimeForOrder = 0;
@@ -175,9 +184,9 @@ public class BeautySalonSimulator extends EventSimulator{
         calendar.add(new EndOfTheShift(28800,this,null));
         calendar.add(new CustomerArrived(time, this, arrivedCustomer));
         //calendar.add(new TestingEvent(0,this, null));
-        if (!maxSpeed){
+        if (typeOfSimulation == TypeOfSimulation.OBSERVE){
             calendar.add(new SystemEvent(currentTime,this, null));
-        }
+        }*/
         addPersonnel();
     }
 
@@ -188,12 +197,89 @@ public class BeautySalonSimulator extends EventSimulator{
 
     @Override
     public void doBeforeReplication() {
+        receptionWaitingQueue.clear();
+        hairstyleWaitingQueue.clear();
+        makeupWaitingQueue.clear();
+        waitTimesInHairstyleQueue.clear();
+        waitTimesInMakeupQueue.clear();
+        waitTimesInPaymentQueue.clear();
+        waitTimesInReceptionQueue.clear();
+        numberOfCustomersInReceptionQueueChangedTime = 0;
+        numberOfCustomersInHairstyleQueueChangedTime = 0;
+        numberOfCustomersInMakeupQueueChangedTime = 0;
+        sumWaitTimeInHairstyleQueue = 0;
+        sumWaitTimeInMakeupQueue = 0;
+        sumWaitTimeInReceptionQueue = 0;
+        averageLengthOfReceptionQueue = 0;
 
+        customerSumTimesInSystem = 0;
+        sumOfWaitTimeForOrder = 0;
+        numberOfStartedOrders = 0;
+
+        if (numberOfHairstylists > 0){
+            isSomeHairstylistFree = true;
+        }else {
+            isSomeHairstylistFree = false;
+        }
+        if (numberOfMakeupArtists > 0){
+            isSomeMakeupArtistsFree = true;
+        }else {
+            isSomeMakeupArtistsFree = false;
+        }
+        if (numberOfReceptionists > 0){
+            isSomeReceptionistFree = true;
+        }else {
+            isSomeReceptionistFree = false;
+        }
+        listOfCustomersInSystem.clear();
+        numberOfArrivedCustomers = 0;
+        numberOfServedCustomers = 0;
+        numberOfLeavingCustomers = 0;
+        calendar.clear();
+        lastProcessedEvent = null;
+        currentTime = 0;
+
+        double time = currentTime + arrivalGenerator.nextValue();
+        Customer arrivedCustomer = new Customer(time);
+        listOfCustomersInSystem.add(arrivedCustomer);
+        calendar.add(new EndOfTheShift(28800,this,null));
+        calendar.add(new CustomerArrived(time, this, arrivedCustomer));
+        if (typeOfSimulation == TypeOfSimulation.OBSERVE){
+            calendar.add(new SystemEvent(currentTime,this, null));
+        }
     }
 
     @Override
     public void doAfterReplication() {
+        if (numberOfReplications == currentReplication+1){
+            finished = true;
+        }
+        //vypocet priemernej dlzky radu
+        if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+            waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+        }else {
+            Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+            waitTimesInReceptionQueue.set(
+                    receptionWaitingQueue.size(),
+                    currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+        }
+        numberOfCustomersInReceptionQueueChangedTime = currentTime;
 
+        double receptionSum = 0;
+        for(int i = 0; i < waitTimesInReceptionQueue.size(); i++){
+            receptionSum += i * waitTimesInReceptionQueue.get(i);
+        }
+        averageLengthOfReceptionQueue = receptionSum/currentTime;
+
+        globalSumAvgLengthOfReceptionQueue+= averageLengthOfReceptionQueue;
+        double avgWaitTime = 0;
+        if (numberOfStartedOrders != 0){
+            avgWaitTime = sumOfWaitTimeForOrder/numberOfStartedOrders;
+        }
+        globalSumAvgWaitTimeForOrder += avgWaitTime;
+        globalSumAvgTimeInSystem += customerSumTimesInSystem/numberOfServedCustomers;
+        super.doAfterReplication();
+        currentReplication++;
     }
 
     private void addPersonnel(){
@@ -388,40 +474,77 @@ public class BeautySalonSimulator extends EventSimulator{
             }
         }
 
+        //TU JE CHYBA/NEPLANUJE PLATENIE POKIAL JE NA RADE ZKAAZNIK KTORI PLATI
         //TODO prerobit tak aby queue bol priorityQueue a tuto teda aby overoval ci plati alebo nie(podla toho by
-        // vytvoril even pre vybavovanie objednavky alebo pre platbu)
+        // vytvoril event pre vybavovanie objednavky alebo pre platbu)
         //planovanie dalsieho vybavovania objednavky
         //pokial je niekto v rade pred recepciou nech si ho priradi niekto z recepcie
-        if (!receptionWaitingQueue.isEmpty() && (hairstyleWaitingQueue.size() + makeupWaitingQueue.size()) <= 10){
-            //priradenie hodnot pre zistovanie statistik o dlzke radu pred recepciou
-            if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
-                waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
-            }else {
-                Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
-                waitTimesInReceptionQueue.set(
-                        receptionWaitingQueue.size(),
-                        currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
-            }
-            numberOfCustomersInReceptionQueueChangedTime = currentTime;
+        if (!receptionWaitingQueue.isEmpty()){
+            if (receptionWaitingQueue.peek().isPaying()){
+                //ak je platiaci zakaznik tak sa vytvori zaciatok platby
+                Customer c = receptionWaitingQueue.poll();
+                //priradenie hodnot pre zistovanie statistik o dlzke radu pred recepciou
+                if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                    waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+                }else {
+                    Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                    waitTimesInReceptionQueue.set(
+                            receptionWaitingQueue.size(),
+                            currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+                }
+                numberOfCustomersInReceptionQueueChangedTime = currentTime;
 
-            Customer c = receptionWaitingQueue.poll();
-            //pridanie novej udalosti pre vybavovanie objednavky do kalendaru
-            PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
-            for (int i = 0; i < listOfReceptionists.size(); i++){
-                Receptionist r = listOfReceptionists.get(i);
-                if (!r.isWorking()){
-                    availableReceptionists.add(r);
+                PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+                for (int i = 0; i < listOfReceptionists.size(); i++){
+                    Receptionist r = listOfReceptionists.get(i);
+                    if (!r.isWorking()){
+                        availableReceptionists.add(r);
+                    }
+                }
+                if (availableReceptionists.size() == 1){
+                    isSomeReceptionistFree = false;
+                }
+                Receptionist chosenReceptionist = availableReceptionists.poll();
+                chosenReceptionist.setWorking(true);
+                calendar.add(
+                        new PaymentBeginning(currentTime,this, c, chosenReceptionist));
+                //TODO toto aj inam?
+                sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
+            }else {
+                //ak nie je platiaci(chce spisat objednavku) tak overi ci je kapacita radov mensia ako 11
+                if ((hairstyleWaitingQueue.size() + makeupWaitingQueue.size()) <= 10){
+                    //moze sa vytvorit udalost pre zaciatok zapisu objednavky
+                    //priradenie hodnot pre zistovanie statistik o dlzke radu pred recepciou
+                    if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+                        waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+                    }else {
+                        Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+                        waitTimesInReceptionQueue.set(
+                                receptionWaitingQueue.size(),
+                                currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+                    }
+                    numberOfCustomersInReceptionQueueChangedTime = currentTime;
+
+                    Customer c = receptionWaitingQueue.poll();
+                    //pridanie novej udalosti pre vybavovanie objednavky do kalendaru
+                    PriorityQueue<Receptionist> availableReceptionists = new PriorityQueue<>();
+                    for (int i = 0; i < listOfReceptionists.size(); i++){
+                        Receptionist r = listOfReceptionists.get(i);
+                        if (!r.isWorking()){
+                            availableReceptionists.add(r);
+                        }
+                    }
+                    if (availableReceptionists.size() == 1){
+                        isSomeReceptionistFree = false;
+                    }
+                    Receptionist chosenReceptionist = availableReceptionists.poll();
+                    chosenReceptionist.setWorking(true);
+                    calendar.add(
+                            new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
+                    //TODO toto aj inam?
+                    sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
                 }
             }
-            if (availableReceptionists.size() == 1){
-                isSomeReceptionistFree = false;
-            }
-            Receptionist chosenReceptionist = availableReceptionists.poll();
-            chosenReceptionist.setWorking(true);
-            calendar.add(
-                    new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
-            //TODO toto aj inam?
-            sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
         }
         lastProcessedEvent = event;
     }
@@ -920,7 +1043,6 @@ public class BeautySalonSimulator extends EventSimulator{
         Double workedTime = receptionist.getWorkedTimeTogether();
         receptionist.setWorkedTimeTogether(workedTime + currentTime - event.getWritingOrderStartTime());
 
-        //TODO
         //naplanovanie novej platby/zapisu objednavky ALE ak to je vytvaranie objednavky tak overit ci je velkost
         //radov dokpy pod 11
         if (!receptionWaitingQueue.isEmpty()){
@@ -1166,8 +1288,6 @@ public class BeautySalonSimulator extends EventSimulator{
         result += "\nPriemerny cas cakania v rade na zadanie objednavky: "
                 + getTotalTimeFromSeconds(avgWaitTime) + "\n  " + numberOfStartedOrders + " zadanych objednavok";
 
-        //TODO
-        //Toto asi uplne vynechat pri max rychlosti
         if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
             waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
         }else {
@@ -1177,7 +1297,47 @@ public class BeautySalonSimulator extends EventSimulator{
                     currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
         }
         numberOfCustomersInReceptionQueueChangedTime = currentTime;
-        //
+
+        double receptionSum = 0;
+        for(int i = 0; i < waitTimesInReceptionQueue.size(); i++){
+            receptionSum += i * waitTimesInReceptionQueue.get(i);
+        }
+        averageLengthOfReceptionQueue = receptionSum/currentTime;
+        result += "\nPriemerny pocet v rade pred recepciou: " + Math.round(averageLengthOfReceptionQueue * 100.0) / 100.0;
+        return result;
+    }
+
+    public String getGlobalStatsAndForCurrentReplication(){
+        //celkove statistiky
+        String result = "Globalne statistiky: \n  Cislo replikacie: " + currentReplication +
+                "\n  Priemerny cas zakaznika v systeme: " +
+                getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)) +
+                "\n  Priemerny pocet v rade pred recepciou: " +
+                Math.round((globalSumAvgLengthOfReceptionQueue/(currentReplication+1)) * 100.0) / 100.0 +
+                "\n  Priemerny cas cakania v rade na zadanie objednavky: " +
+                getTotalTimeFromSeconds(globalSumAvgWaitTimeForOrder/(currentReplication+1));
+        //pre poslednu replikaciu
+        result += "\nPosledna replikacia: \n";
+        result += "  Priemerny cas zakaznika v systeme: "
+                + getTotalTimeFromSeconds(customerSumTimesInSystem/numberOfServedCustomers)
+                + "\n  " + numberOfServedCustomers + " obsluzenych zakaznikov";
+        double avgWaitTime = 0;
+        if (numberOfStartedOrders != 0){
+            avgWaitTime = sumOfWaitTimeForOrder/numberOfStartedOrders;
+        }
+        result += "\nPriemerny cas cakania v rade na zadanie objednavky: "
+                + getTotalTimeFromSeconds(avgWaitTime) + "\n  " + numberOfStartedOrders + " zadanych objednavok";
+
+        if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+            waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+        }else {
+            Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+            waitTimesInReceptionQueue.set(
+                    receptionWaitingQueue.size(),
+                    currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+        }
+        numberOfCustomersInReceptionQueueChangedTime = currentTime;
+
         double receptionSum = 0;
         for(int i = 0; i < waitTimesInReceptionQueue.size(); i++){
             receptionSum += i * waitTimesInReceptionQueue.get(i);
@@ -1199,14 +1359,6 @@ public class BeautySalonSimulator extends EventSimulator{
         }else {
             finished = true;
         }
-    }
-
-    public boolean isMaxSpeed() {
-        return maxSpeed;
-    }
-
-    public void setMaxSpeed(boolean maxSpeed) {
-        this.maxSpeed = maxSpeed;
     }
 
     public void setDeltaT(int deltaT) {

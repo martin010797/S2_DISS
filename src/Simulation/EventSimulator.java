@@ -13,6 +13,7 @@ public abstract class EventSimulator extends Simulator{
     protected int lengthOfSimulation;
 
     protected Event lastProcessedEvent;
+    protected TypeOfSimulation typeOfSimulation;
 
     private List<ISimDelegate> delegates;
 
@@ -41,6 +42,15 @@ public abstract class EventSimulator extends Simulator{
             Event event = calendar.poll();
             currentTime = event.getTime();
             event.execute();
+            if (typeOfSimulation == TypeOfSimulation.OBSERVE){
+                refreshGui();
+            }
+        }
+    }
+
+    @Override
+    public void doAfterReplication() {
+        if (typeOfSimulation == TypeOfSimulation.MAX_SPEED){
             refreshGui();
         }
     }
@@ -96,5 +106,13 @@ public abstract class EventSimulator extends Simulator{
 
     public Event getLastProcessedEvent() {
         return lastProcessedEvent;
+    }
+
+    public TypeOfSimulation getTypeOfSimulation() {
+        return typeOfSimulation;
+    }
+
+    public void setTypeOfSimulation(TypeOfSimulation typeOfSimulation) {
+        this.typeOfSimulation = typeOfSimulation;
     }
 }

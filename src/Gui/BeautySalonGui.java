@@ -3,6 +3,7 @@ package Gui;
 import Simulation.BeautySalonSimulator;
 import Simulation.Events.Event;
 import Simulation.Simulator;
+import Simulation.TypeOfSimulation;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -65,6 +66,7 @@ public class BeautySalonGui implements ISimDelegate{
         frame.setVisible(true);
 
         simulator = new BeautySalonSimulator(1,100000000);
+        simulator.setTypeOfSimulation(TypeOfSimulation.OBSERVE);
         simulator.setDeltaT(400);
         simulator.setSleepLength(400);
         simulator.registerDelegate(this);
@@ -88,6 +90,12 @@ public class BeautySalonGui implements ISimDelegate{
         startSimulationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (simulator.getTypeOfSimulation() == TypeOfSimulation.MAX_SPEED){
+                    simulator.setNumberOfReplications(Integer.parseInt(numberOfReplicationsTextField.getText()));
+                }
+                if (simulator.getTypeOfSimulation() == TypeOfSimulation.OBSERVE){
+                    simulator.setNumberOfReplications(1);
+                }
                 simulator.setDeltaT(Integer.parseInt(deltaTTextField.getText()));
                 simulator.setSleepLength(Integer.parseInt(lengthOfSleepTextField.getText()));
                 fastSimulationRadioButton.setEnabled(false);
@@ -122,6 +130,7 @@ public class BeautySalonGui implements ISimDelegate{
                 changeTheSpeedButton.setVisible(false);
                 numberOfHairdressersLabel.setVisible(true);
                 numberOfHairdressersTextField.setVisible(true);
+                simulator.setTypeOfSimulation(TypeOfSimulation.MAX_SPEED);
             }
         });
         slowSimulationRadioButton.addActionListener(new ActionListener() {
@@ -136,6 +145,7 @@ public class BeautySalonGui implements ISimDelegate{
                 changeTheSpeedButton.setVisible(true);
                 numberOfHairdressersLabel.setVisible(true);
                 numberOfHairdressersTextField.setVisible(true);
+                simulator.setTypeOfSimulation(TypeOfSimulation.OBSERVE);
             }
         });
         pauseSimulationButton.addActionListener(new ActionListener() {
@@ -165,6 +175,7 @@ public class BeautySalonGui implements ISimDelegate{
                 changeTheSpeedButton.setVisible(false);
                 numberOfHairdressersLabel.setVisible(false);
                 numberOfHairdressersTextField.setVisible(false);
+                simulator.setTypeOfSimulation(TypeOfSimulation.MAX_WITH_CHART);
             }
         });
     }
@@ -172,38 +183,55 @@ public class BeautySalonGui implements ISimDelegate{
     @Override
     public void refresh(Simulator simulator) {
         BeautySalonSimulator sim = (BeautySalonSimulator) simulator;
-        //TODO vykresluj iba ak nie je zapnuta max rychlost
-        simulationTimeLabel.setText(sim.getCurrentTime());
+        TypeOfSimulation typeOfSimulation = sim.getTypeOfSimulation();
+        if (typeOfSimulation == TypeOfSimulation.OBSERVE){
+            //toto vykresluj iba ak je zapnute sledovanie simulacie
+            simulationTimeLabel.setText(sim.getCurrentTime());
 
-        String statesOfSystem = sim.getStatesOfSimulation();
-        //aby vykreslovalo len ked nastala zmena nejakej hondoty
-        if (!statesOfSystem.equals(lastStatesValues)) {
-            statesOfSystemTextPane.setText(statesOfSystem);
-            lastStatesValues = statesOfSystemTextPane.getText();
-        }
-        String calendar = sim.getCalendar();
-        if (!calendar.equals(lastCalendar)){
-            calendarTextPane.setText(calendar);
-            lastCalendar = calendarTextPane.getText();
+            String statesOfSystem = sim.getStatesOfSimulation();
+            //aby vykreslovalo len ked nastala zmena nejakej hondoty
+            if (!statesOfSystem.equals(lastStatesValues)) {
+                statesOfSystemTextPane.setText(statesOfSystem);
+                lastStatesValues = statesOfSystemTextPane.getText();
+            }
+            String calendar = sim.getCalendar();
+            if (!calendar.equals(lastCalendar)){
+                calendarTextPane.setText(calendar);
+                lastCalendar = calendarTextPane.getText();
+            }
+
+            //v spracovanych nezobrazuje systemove udalosti
+            if (sim.getLastProcessedEvent() != null){
+                Event e = sim.getLastProcessedEvent();
+                lastProcessedEventLabel.setText(sim.convertTimeOfSystem(e.getTime()) + "  " + e.getNameOfTheEvent());
+            }
+
+            String stats = sim.getStats();
+            if (!stats.equals(lastStats)){
+                statisticsTextPane.setText(stats);
+                lastStats = statisticsTextPane.getText();
+            }
+
+            if (sim.isFinished()){
+                fastSimulationRadioButton.setEnabled(true);
+                slowSimulationRadioButton.setEnabled(true);
+                chartOutputRadioButton.setEnabled(true);
+            }
+        }else if (typeOfSimulation == TypeOfSimulation.MAX_SPEED){
+            String stats = sim.getGlobalStatsAndForCurrentReplication();
+            //if (!stats.equals(lastStats)){
+                statisticsTextPane.setText(stats);
+                //lastStats = statisticsTextPane.getText();
+            //}
+            if (sim.isFinished()){
+                fastSimulationRadioButton.setEnabled(true);
+                slowSimulationRadioButton.setEnabled(true);
+                chartOutputRadioButton.setEnabled(true);
+            }
+        }else {
+            //aj s grafom
         }
 
-        //v spracovanych nezobrazuje systemove udalosti
-        if (sim.getLastProcessedEvent() != null){
-            Event e = sim.getLastProcessedEvent();
-            lastProcessedEventLabel.setText(sim.convertTimeOfSystem(e.getTime()) + "  " + e.getNameOfTheEvent());
-        }
-
-        String stats = sim.getStats();
-        if (!stats.equals(lastStats)){
-            statisticsTextPane.setText(stats);
-            lastStats = statisticsTextPane.getText();
-        }
-
-        if (sim.isFinished()){
-            fastSimulationRadioButton.setEnabled(true);
-            slowSimulationRadioButton.setEnabled(true);
-            chartOutputRadioButton.setEnabled(true);
-        }
     }
 
     public void createDatasets(){
