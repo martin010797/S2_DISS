@@ -52,6 +52,7 @@ public class BeautySalonGui implements ISimDelegate{
 
     private DefaultXYDataset datasetLineChart;
     private XYSeries lineChartXYSeries;
+    private XYSeries lineChartXYSeriesUntil17;
     private JFreeChart lineChart;
     private BeautySalonSimulator simulator;
     private String lastStatesValues;
@@ -239,10 +240,15 @@ public class BeautySalonGui implements ISimDelegate{
         }else {
             //aj s grafom
             String currentText = statisticsTextPane.getText();
-            String newData = currentText + "Priemerna dlzka radu: " + sim.getGlobalAverageLengthOfReceptionQueue()+
-                    "\nPocet kadeerniciek: " + sim.getNumberOfHairstylists() + "\n";
+            String newData = currentText + "Cela doba: \n  Priemerna dlzka radu: " +
+                    (Math.round(sim.getGlobalAverageLengthOfReceptionQueue() * 100.0) / 100.0) +
+                    "\n  Pocet kadeerniciek: " + sim.getNumberOfHairstylists() + "\n";
+            newData += "Do 17:00: \n  Priemerna dlzka radu: " +
+                    (Math.round(sim.getGlobalUntil17AverageLengthOfReceptionQueue() * 100.0) / 100.0)+
+                    "\n  Pocet kadeerniciek: " + sim.getNumberOfHairstylists() + "\n";
             statisticsTextPane.setText(newData);
             addToChart(sim.getGlobalAverageLengthOfReceptionQueue(),sim.getNumberOfHairstylists());
+            addToChartUntil17(sim.getGlobalUntil17AverageLengthOfReceptionQueue(),sim.getNumberOfHairstylists());
             if (sim.isFinished()){
                 fastSimulationRadioButton.setEnabled(true);
                 slowSimulationRadioButton.setEnabled(true);
@@ -254,6 +260,7 @@ public class BeautySalonGui implements ISimDelegate{
     public void createDatasets(){
         datasetLineChart = new DefaultXYDataset();
         lineChartXYSeries = new XYSeries("waitingQueue");
+        lineChartXYSeriesUntil17 = new XYSeries("waitingQueueUntil17");
         lineChart = ChartFactory.createXYLineChart(
                 "Priemerne pocty cakajucich v rade na recepcii",
                 "Pocet kaderniciek",
@@ -275,6 +282,11 @@ public class BeautySalonGui implements ISimDelegate{
     public void addToChart(double averageNumberOfCustomersInReceptionQueue, int numberOfHairstylists){
         lineChartXYSeries.add(numberOfHairstylists, averageNumberOfCustomersInReceptionQueue);
         datasetLineChart.addSeries(lineChartXYSeries.getKey(), lineChartXYSeries.toArray());
+    }
+
+    public void addToChartUntil17(double averageNumberOfCustomersInReceptionQueue, int numberOfHairstylists){
+        lineChartXYSeriesUntil17.add(numberOfHairstylists, averageNumberOfCustomersInReceptionQueue);
+        datasetLineChart.addSeries(lineChartXYSeriesUntil17.getKey(), lineChartXYSeriesUntil17.toArray());
     }
 
     private void setDeafultText(){

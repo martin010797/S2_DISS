@@ -37,6 +37,7 @@ public class BeautySalonSimulator extends EventSimulator{
 
     private int numberOfArrivedCustomers;
     private int numberOfServedCustomers;
+    private int numberOfServedCustomersUntil17;
     private int numberOfLeavingCustomers;
 
     private PriorityQueue<Customer> receptionWaitingQueue;
@@ -55,14 +56,19 @@ public class BeautySalonSimulator extends EventSimulator{
     private double sumWaitTimeInMakeupQueue;
 
     private double customerSumTimesInSystem;
+    private double customerSumTimesInSystemUntil17;
     private double sumOfWaitTimeForOrder;
     private int numberOfStartedOrders;
     private double averageLengthOfReceptionQueue;
+    private double averageLengthOfReceptionQueueUntil17;
 
     //globalne statistiky
     private double globalSumAvgWaitTimeForOrder;
     private double globalSumAvgTimeInSystem;
     private double globalSumAvgLengthOfReceptionQueue;
+    //do 17:00
+    private double globalUntil17SumAvgTimeInSystem;
+    private double globalUntil17SumAvgLengthOfReceptionQueue;
 
     private List<Customer> listOfCustomersInSystem;
     private List<Hairstylist> listOfHairStylists;
@@ -123,6 +129,7 @@ public class BeautySalonSimulator extends EventSimulator{
 
         numberOfArrivedCustomers = 0;
         numberOfServedCustomers = 0;
+        numberOfServedCustomersUntil17 = 0;
         numberOfLeavingCustomers = 0;
     }
 
@@ -136,60 +143,8 @@ public class BeautySalonSimulator extends EventSimulator{
         globalSumAvgLengthOfReceptionQueue = 0;
         globalSumAvgWaitTimeForOrder = 0;
         globalSumAvgTimeInSystem = 0;
-        /*receptionWaitingQueue.clear();
-        hairstyleWaitingQueue.clear();
-        makeupWaitingQueue.clear();
-        waitTimesInHairstyleQueue.clear();
-        waitTimesInMakeupQueue.clear();
-        waitTimesInPaymentQueue.clear();
-        waitTimesInReceptionQueue.clear();
-        numberOfCustomersInReceptionQueueChangedTime = 0;
-        numberOfCustomersInHairstyleQueueChangedTime = 0;
-        numberOfCustomersInMakeupQueueChangedTime = 0;
-        sumWaitTimeInHairstyleQueue = 0;
-        sumWaitTimeInMakeupQueue = 0;
-        sumWaitTimeInReceptionQueue = 0;
-
-        globalSumAvgLengthOfReceptionQueue = 0;
-        globalSumAvgWaitTimeForOrder = 0;
-        globalSumAvgTimeInSystem = 0;
-
-        customerSumTimesInSystem = 0;
-        sumOfWaitTimeForOrder = 0;
-        numberOfStartedOrders = 0;
-
-        if (numberOfHairstylists > 0){
-            isSomeHairstylistFree = true;
-        }else {
-            isSomeHairstylistFree = false;
-        }
-        if (numberOfMakeupArtists > 0){
-            isSomeMakeupArtistsFree = true;
-        }else {
-            isSomeMakeupArtistsFree = false;
-        }
-        if (numberOfReceptionists > 0){
-            isSomeReceptionistFree = true;
-        }else {
-            isSomeReceptionistFree = false;
-        }
-        listOfCustomersInSystem.clear();
-        numberOfArrivedCustomers = 0;
-        numberOfServedCustomers = 0;
-        numberOfLeavingCustomers = 0;
-        calendar.clear();
-        lastProcessedEvent = null;
-        currentTime = 0;
-
-        double time = currentTime + arrivalGenerator.nextValue();
-        Customer arrivedCustomer = new Customer(time);
-        listOfCustomersInSystem.add(arrivedCustomer);
-        calendar.add(new EndOfTheShift(28800,this,null));
-        calendar.add(new CustomerArrived(time, this, arrivedCustomer));
-        //calendar.add(new TestingEvent(0,this, null));
-        if (typeOfSimulation == TypeOfSimulation.OBSERVE){
-            calendar.add(new SystemEvent(currentTime,this, null));
-        }*/
+        globalUntil17SumAvgLengthOfReceptionQueue = 0;
+        globalUntil17SumAvgTimeInSystem = 0;
         addPersonnel();
     }
 
@@ -217,8 +172,10 @@ public class BeautySalonSimulator extends EventSimulator{
         sumWaitTimeInMakeupQueue = 0;
         sumWaitTimeInReceptionQueue = 0;
         averageLengthOfReceptionQueue = 0;
+        averageLengthOfReceptionQueueUntil17 = 0;
 
         customerSumTimesInSystem = 0;
+        customerSumTimesInSystemUntil17 = 0;
         sumOfWaitTimeForOrder = 0;
         numberOfStartedOrders = 0;
 
@@ -284,6 +241,9 @@ public class BeautySalonSimulator extends EventSimulator{
         }
         globalSumAvgWaitTimeForOrder += avgWaitTime;
         globalSumAvgTimeInSystem += customerSumTimesInSystem/numberOfServedCustomers;
+
+        globalUntil17SumAvgTimeInSystem += customerSumTimesInSystemUntil17/numberOfServedCustomersUntil17;
+        globalUntil17SumAvgLengthOfReceptionQueue += averageLengthOfReceptionQueueUntil17;
         super.doAfterReplication();
         currentReplication++;
     }
@@ -1121,6 +1081,26 @@ public class BeautySalonSimulator extends EventSimulator{
     }
     
     public void closingProcess(){
+        //Toto je kvoli statistikam len do 17:00
+        if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
+            waitTimesInReceptionQueue.add(currentTime - numberOfCustomersInReceptionQueueChangedTime);
+        }else {
+            Double currentValue = waitTimesInReceptionQueue.get(receptionWaitingQueue.size());
+            waitTimesInReceptionQueue.set(
+                    receptionWaitingQueue.size(),
+                    currentValue+(currentTime-numberOfCustomersInReceptionQueueChangedTime));
+        }
+        numberOfCustomersInReceptionQueueChangedTime = currentTime;
+
+        double receptionSum = 0;
+        for(int i = 0; i < waitTimesInReceptionQueue.size(); i++){
+            receptionSum += i * waitTimesInReceptionQueue.get(i);
+        }
+        averageLengthOfReceptionQueueUntil17 = receptionSum/currentTime;
+        customerSumTimesInSystemUntil17 = customerSumTimesInSystem;
+        numberOfServedCustomersUntil17 = numberOfServedCustomers;
+        //
+
         Iterator itr = listOfCustomersInSystem.iterator();
         int numberOfRemoved = 0;
         while (itr.hasNext()) {
@@ -1134,10 +1114,6 @@ public class BeautySalonSimulator extends EventSimulator{
         numberOfLeavingCustomers = numberOfRemoved;
     }
 
-    public void testing(TestingEvent event){
-        calendar.add(new TestingEvent(currentTime + 1,this, null));
-        lastProcessedEvent = event;
-    }
 
     public String getStatesOfSimulation(){
         String result = "";
@@ -1314,15 +1290,22 @@ public class BeautySalonSimulator extends EventSimulator{
 
     public String getGlobalStatsAndForCurrentReplication(){
         //celkove statistiky
-        String result = "Globalne statistiky: \n  Cislo replikacie: " + currentReplication +
-                "\n  Priemerny cas zakaznika v systeme: " +
+        String result = "Globalne statistiky: \n  Celkovo: \n    Cislo replikacie: " + currentReplication +
+                "\n    Priemerny cas zakaznika v systeme: " +
                 getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)) +
-                "\n  Priemerny pocet v rade pred recepciou: " +
+                "\n    Priemerny pocet v rade pred recepciou: " +
                 Math.round((globalSumAvgLengthOfReceptionQueue/(currentReplication+1)) * 100.0) / 100.0 +
-                "\n  Priemerny cas cakania v rade na zadanie objednavky: " +
+                "\n    Priemerny cas cakania v rade na zadanie objednavky: " +
+                getTotalTimeFromSeconds(globalSumAvgWaitTimeForOrder/(currentReplication+1));
+        result += "\n  Iba do 17:00: \n    Cislo replikacie: " + currentReplication +
+                "\n    Priemerny cas zakaznika v systeme: " +
+                getTotalTimeFromSeconds(globalUntil17SumAvgTimeInSystem/(currentReplication+1)) +
+                "\n    Priemerny pocet v rade pred recepciou: " +
+                Math.round((globalUntil17SumAvgLengthOfReceptionQueue/(currentReplication+1)) * 100.0) / 100.0 +
+                "\n    Priemerny cas cakania v rade na zadanie objednavky: " +
                 getTotalTimeFromSeconds(globalSumAvgWaitTimeForOrder/(currentReplication+1));
         //pre poslednu replikaciu
-        result += "\nPosledna replikacia: \n";
+        result += "\nPosledna replikacia(celkovy cas): \n";
         result += "  Priemerny cas zakaznika v systeme: "
                 + getTotalTimeFromSeconds(customerSumTimesInSystem/numberOfServedCustomers)
                 + "\n  " + numberOfServedCustomers + " obsluzenych zakaznikov";
@@ -1330,7 +1313,7 @@ public class BeautySalonSimulator extends EventSimulator{
         if (numberOfStartedOrders != 0){
             avgWaitTime = sumOfWaitTimeForOrder/numberOfStartedOrders;
         }
-        result += "\nPriemerny cas cakania v rade na zadanie objednavky: "
+        result += "\n  Priemerny cas cakania v rade na zadanie objednavky: "
                 + getTotalTimeFromSeconds(avgWaitTime) + "\n  " + numberOfStartedOrders + " zadanych objednavok";
 
         if (waitTimesInReceptionQueue.size() < receptionWaitingQueue.size()+1){
@@ -1348,12 +1331,16 @@ public class BeautySalonSimulator extends EventSimulator{
             receptionSum += i * waitTimesInReceptionQueue.get(i);
         }
         averageLengthOfReceptionQueue = receptionSum/currentTime;
-        result += "\nPriemerny pocet v rade pred recepciou: " + Math.round(averageLengthOfReceptionQueue * 100.0) / 100.0;
+        result += "\n  Priemerny pocet v rade pred recepciou: " + Math.round(averageLengthOfReceptionQueue * 100.0) / 100.0;
         return result;
     }
 
     public double getGlobalAverageLengthOfReceptionQueue(){
         return globalSumAvgLengthOfReceptionQueue/(currentReplication+1);
+    }
+
+    public double getGlobalUntil17AverageLengthOfReceptionQueue() {
+        return globalUntil17SumAvgLengthOfReceptionQueue/(currentReplication+1);
     }
 
     public void systemEventOccured(){
