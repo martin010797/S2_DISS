@@ -354,6 +354,7 @@ public class BeautySalonSimulator extends EventSimulator{
                 customer.setHairstyle(false);
                 customer.setMakeup(true);
             }else {
+                //tu chcu aj aj
                 customer.setHairstyle(true);
                 customer.setMakeup(true);
             }
@@ -605,8 +606,6 @@ public class BeautySalonSimulator extends EventSimulator{
     public void skinCleaningEndProcess(SkinCleaningEnd event){
         Customer customer = event.getCustomer();
         MakeUpArtist makeUpArtist = event.getChosenMakeupArtist();
-        //temp
-        //customer.setCurrentPosition(CurrentPosition.PAYING);
 
         //update pre kozmeticku
         makeUpArtist.setWorking(false);
@@ -695,8 +694,6 @@ public class BeautySalonSimulator extends EventSimulator{
     public void makeupEndProcess(MakeupEnd event){
         Customer customer = event.getCustomer();
         MakeUpArtist makeUpArtist = event.getChosenMakeupArtist();
-        //temp
-        //customer.setCurrentPosition(CurrentPosition.PAYING);
 
         //update pre kozmeticku
         makeUpArtist.setWorking(false);
@@ -822,8 +819,6 @@ public class BeautySalonSimulator extends EventSimulator{
     public void hairstyleEndProcess(HairstyleEnd event){
         Customer customer = event.getCustomer();
         Hairstylist hairstylist = event.getChosenHairstylist();
-        //temp
-        //customer.setCurrentPosition(CurrentPosition.PAYING);
 
         int queuesSizeBeforeCreatingEvents = makeupWaitingQueue.size() + hairstyleWaitingQueue.size();
         //update pre kadernicku
@@ -1297,7 +1292,7 @@ public class BeautySalonSimulator extends EventSimulator{
                 "\n    Priemerny cas zakaznika v systeme: " +
                 getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)) +
                 "\n      Smerodajna odchylka: " + getTotalTimeFromSeconds(standardDeviation) +
-                "\n      Interval spolahlivosti: <" +
+                "\n      90% Interval spolahlivosti: <" +
                 getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)-confidenceInterval) +
                 ", " + getTotalTimeFromSeconds(globalSumAvgTimeInSystem/(currentReplication+1)+confidenceInterval) +
                 ">\n    Priemerny pocet v rade pred recepciou: " +
@@ -1308,7 +1303,7 @@ public class BeautySalonSimulator extends EventSimulator{
                 "\n    Priemerny cas zakaznika v systeme: " +
                 getTotalTimeFromSeconds(globalUntil17SumAvgTimeInSystem/(currentReplication+1)) +
                 "\n      Smerodajna odchylka: " + getTotalTimeFromSeconds(standardDeviationUntil17) +
-                "\n      Interval spolahlivosti: <" +
+                "\n      90% Interval spolahlivosti: <" +
                 getTotalTimeFromSeconds(globalUntil17SumAvgTimeInSystem/(currentReplication+1)-confidenceIntervalUntil17) +
                 ", " + getTotalTimeFromSeconds(globalUntil17SumAvgTimeInSystem/(currentReplication+1)+confidenceIntervalUntil17) +
                 ">\n    Priemerny pocet v rade pred recepciou: " +

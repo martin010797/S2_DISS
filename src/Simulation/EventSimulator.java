@@ -24,11 +24,6 @@ public abstract class EventSimulator extends Simulator{
         delegates = new ArrayList<>();
     }
 
-    /*@Override
-    public void simulate() {
-        super.simulate();
-    }*/
-
     @Override
     public void replication() {
         while (!calendar.isEmpty() && (calendar.peek().getTime()) <= lengthOfSimulation){

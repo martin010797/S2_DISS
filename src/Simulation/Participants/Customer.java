@@ -1,6 +1,6 @@
 package Simulation.Participants;
 
-public class Customer extends Person implements Comparable<Customer>{
+public class Customer implements Comparable<Customer>{
     private double arriveTime;
     private CurrentPosition currentPosition;
 

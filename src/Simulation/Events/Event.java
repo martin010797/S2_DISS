@@ -26,7 +26,6 @@ public abstract class Event implements Comparable<Event>{
         }else {
             return 0;
         }
-        //return this.time - o.time;
     }
 
     public double getTime() {

@@ -1,6 +1,6 @@
 package Simulation.Participants;
 
-public class Personnel extends Person implements Comparable<Personnel>{
+public class Personnel implements Comparable<Personnel>{
     protected double workedTimeTogether;
     protected boolean isWorking;
 
