@@ -76,7 +76,7 @@ public class BeautySalonGui implements ISimDelegate{
 
         frame.pack();
         frame.setLocationRelativeTo(null);
-        //frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         ButtonGroup speedOfTheSimulationButtonGroup = new ButtonGroup();
         speedOfTheSimulationButtonGroup.add(fastSimulationRadioButton);

@@ -459,8 +459,6 @@ public class BeautySalonSimulator extends EventSimulator{
             }
         }
 
-        //TODO prerobit tak aby queue bol priorityQueue a tuto teda aby overoval ci plati alebo nie(podla toho by
-        // vytvoril event pre vybavovanie objednavky alebo pre platbu)
         //planovanie dalsieho vybavovania objednavky
         //pokial je niekto v rade pred recepciou nech si ho priradi niekto z recepcie
         if (!receptionWaitingQueue.isEmpty()){
@@ -492,7 +490,6 @@ public class BeautySalonSimulator extends EventSimulator{
                 chosenReceptionist.setWorking(true);
                 calendar.add(
                         new PaymentBeginning(currentTime,this, c, chosenReceptionist));
-                //TODO toto aj inam?
                 sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
             }else {
                 //ak nie je platiaci(chce spisat objednavku) tak overi ci je kapacita radov mensia ako 11
@@ -525,7 +522,6 @@ public class BeautySalonSimulator extends EventSimulator{
                     chosenReceptionist.setWorking(true);
                     calendar.add(
                             new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
-                    //TODO toto aj inam?
                     sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
                 }
             }
@@ -537,13 +533,6 @@ public class BeautySalonSimulator extends EventSimulator{
         Customer customer = event.getCustomer();
         customer.setCurrentPosition(CurrentPosition.HAIR_STYLING);
         double durationOfHairstyle;
-        /*
-        calendar.add(new WritingOrderEnd(
-                currentTime + lengthOfOrdering,
-                this,
-                customer,
-                event.getTime(),
-                event.getChosenReceptionist()));*/
         double choice = hairstyleTypeGenerator.nextDouble();
         if (choice < 0.4){
             //jednoduchy uces
@@ -575,10 +564,6 @@ public class BeautySalonSimulator extends EventSimulator{
                 )
         );
         lastProcessedEvent = event;
-        //TODO
-        //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
-        //toto bude nakoniec v ende udalosti(pre vsetky tri sluzby) kde bude planovat novu sluzbu(teda sa uvolni miesot v rade)
-        //naplanovanie koncu
     }
     public void makeupBeginningProcess(MakeupBeginning event){
         Customer customer = event.getCustomer();
@@ -961,7 +946,6 @@ public class BeautySalonSimulator extends EventSimulator{
             );
         }
 
-        //TODO tu neviem presne ako by mal postupovat keby mal v rade nejakeho co chce platit
         //pokial sa znizil tymto pocet pod 11 v radoch pre licenie a uces tak zacni udalost pre vybavovanie objednavky
         if (((makeupWaitingQueue.size() + hairstyleWaitingQueue.size()) == 10
                 && queuesSizeBeforeCreatingEvents == 11)
@@ -1058,7 +1042,6 @@ public class BeautySalonSimulator extends EventSimulator{
                 chosenReceptionist.setWorking(true);
                 calendar.add(
                         new PaymentBeginning(currentTime,this, c, chosenReceptionist));
-                //TODO toto aj inam?
                 sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
             }else {
                 //ak nie je platiaci(chce spisat objednavku) tak overi ci je kapacita radov mensia ako 11
@@ -1091,7 +1074,6 @@ public class BeautySalonSimulator extends EventSimulator{
                     chosenReceptionist.setWorking(true);
                     calendar.add(
                             new WritingOrderBeginning(currentTime,this, c, chosenReceptionist));
-                    //TODO toto aj inam?
                     sumWaitTimeInReceptionQueue += currentTime - c.getArriveTime();
                 }
             }
